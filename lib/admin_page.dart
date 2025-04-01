@@ -13,7 +13,7 @@ class RapportState extends State<Rapport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Rapport mensuel"),
+        title: Center(child: Text("Rapport mensuel",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),)
       ),
       body: Column(
         children: [

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:projets/presence_page.dart';
+import 'package:projets/retard_page.dart';
+import 'absence_page.dart';
+import 'heure_supp.dart';
 
 class Presence extends StatefulWidget {
   @override
@@ -40,28 +44,13 @@ class _PresenceState extends State<Presence> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Suivie de Présence", style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white)),
+        title: Text("Suivie de Présence", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: Color(0xFF003366),
         actions: [
           IconButton(
             onPressed: () {},
             icon: Icon(Icons.notifications, size: 35, color: Colors.white),
           ),
-
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white.withOpacity(0.9),
-        elevation: 10,
-        selectedItemColor: Color(0xFF003366),
-        unselectedItemColor: Colors.grey,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home, size: 30), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.save, size: 30), label: ''),
-          BottomNavigationBarItem( icon: Icon(Icons.file_download_sharp, size: 30), label: ''),
         ],
       ),
       body: Container(
@@ -81,15 +70,40 @@ class _PresenceState extends State<Presence> {
               Expanded(
                 child: ListView(
                   children: [
-                    _buildStatCard("Présence", "22 / 30", Icons.check_circle, Colors.green),
+                    _buildStatCard("Présence", "22 / 30", Icons.check_circle, Colors.green, onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => PresencePage()),
+                      );
+                    }),
                     SizedBox(height: 33),
-                    _buildStatCard("Absence", "8 / 30", Icons.cancel, Colors.grey),
+                    _buildStatCard("Absence", "8 / 30", Icons.cancel, Colors.grey, onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AbsencePage()),
+                      );
+                    }),
                     SizedBox(height: 33),
-                    _buildStatCard("Retard", "13 min", Icons.timer, Colors.brown),
+                    _buildStatCard("Retard", "13 min", Icons.timer, Colors.brown, onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => RetardPage()),
+                      );
+                    }),
                     SizedBox(height: 33),
-                    _buildStatCard("Pénalité", "5.000 FCFA", Icons.money_off, Colors.black),
+                    _buildStatCard("Pénalité", "5.000 FCFA", Icons.money_off, Colors.black, onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Presence()),
+                      );
+                    }),
                     SizedBox(height: 33),
-                    _buildStatCard("Heures Supp", "19 min", Icons.access_time, Colors.teal, isLarge: true),
+                    _buildStatCard("Heures Supp", "19 min", Icons.access_time, Colors.teal, isLarge: true, onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HeuresSupplementairesPage()),
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -104,13 +118,13 @@ class _PresenceState extends State<Presence> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text("Du", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color:Colors.black)),
+        Text("Du", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
         SizedBox(width: 10),
-        _datePickerButton("Du", _selectedDate, () => _selectDate(context, true), style: TextStyle(color:Colors.black)),
+        _datePickerButton("Du", _selectedDate, () => _selectDate(context, true), style: TextStyle(color: Colors.black)),
         SizedBox(width: 10),
-        Text("Au", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color:Colors.black)),
+        Text("Au", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
         SizedBox(width: 10),
-        _datePickerButton("Au", _selectedEndDate, () => _selectDate(context, false), style: TextStyle(color:Colors.black)),
+        _datePickerButton("Au", _selectedEndDate, () => _selectDate(context, false), style: TextStyle(color: Colors.black)),
       ],
     );
   }
@@ -138,33 +152,36 @@ class _PresenceState extends State<Presence> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color iconColor, {bool isLarge = false}) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(45),
-        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, spreadRadius: 2)],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            backgroundColor: iconColor.withOpacity(0.2),
-            radius: 25,
-            child: Icon(icon, color: iconColor, size: 30),
-          ),
-          SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
-              SizedBox(height: 5),
-              Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey[700])),
-            ],
-          ),
-        ],
+  Widget _buildStatCard(String title, String value, IconData icon, Color iconColor, {bool isLarge = false, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(45),
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, spreadRadius: 2)],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: iconColor.withOpacity(0.2),
+              radius: 25,
+              child: Icon(icon, color: iconColor, size: 30),
+            ),
+            SizedBox(width: 15),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
+                SizedBox(height: 5),
+                Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
