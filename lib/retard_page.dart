@@ -49,7 +49,7 @@ class _RetardPageState extends State<RetardPage> {
         title: Text('Retards',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor:  Color(0xFF2B9BD7),
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -119,7 +119,7 @@ class _RetardPageState extends State<RetardPage> {
               ),
             ),
           ),
-          // Message "Aucun retard enregistré"
+
           if (totalMinutesRetard == 0)
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -127,7 +127,7 @@ class _RetardPageState extends State<RetardPage> {
                 'Aucun retard enregistré.',
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.deepPurple,
+                  color: Color(0xFF2B9BD7),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -224,7 +224,7 @@ class _RetardPageState extends State<RetardPage> {
                                 if (retard['motif']!.isNotEmpty)
                                   Text(
                                     'Motif de retard : ${retard['motif']}',
-                                    style: TextStyle(color: Colors.deepPurple),
+                                    style: TextStyle(color:  Color(0xFF2B9BD7)),
                                   ),
                                 SizedBox(height: 6),
                                 if (retard['motif']!.isNotEmpty)

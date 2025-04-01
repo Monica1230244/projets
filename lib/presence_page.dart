@@ -18,7 +18,7 @@ class _PresencePageState extends State<PresencePage> {
   // Variable pour gérer l'élément sélectionné
   int? selectedIndex;
 
-  // Calculer le nombre total de présences
+
   int getTotalPresences() {
     return presences.length;
   }
@@ -34,7 +34,7 @@ class _PresencePageState extends State<PresencePage> {
     return "";
   }
 
-  // Vérifier les heures supplémentaires après 18h30
+
   String checkHeuresSupplementaires(String heureDepart) {
     DateTime heure_depart = DateTime.parse("2025-03-01 $heureDepart:00");
     DateTime heure_limite = DateTime.parse("2025-03-01 18:30:00");

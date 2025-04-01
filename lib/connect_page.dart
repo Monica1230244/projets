@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projets/accueil_page.dart';
 
 class ConnectPage extends StatefulWidget {
   @override
@@ -16,7 +17,7 @@ class _ConnectPageState extends State<ConnectPage> {
             end: Alignment.bottomCenter,
             colors: [
               Colors.white,
-              Colors.purple.shade100,
+              Color(0xFF2B9BD7),
             ],
           ),
         ),
@@ -62,7 +63,7 @@ class _ConnectPageState extends State<ConnectPage> {
                             onChanged: (value) {},
                             fillColor: MaterialStateProperty.resolveWith<Color>(
                                   (Set<MaterialState> states) {
-                                return Colors.purple;
+                                return  Color(0xFF2B9BD7);
                               },
                             ),
                           ),
@@ -73,16 +74,21 @@ class _ConnectPageState extends State<ConnectPage> {
                         onPressed: () {},
                         child: Text(
                           'Forget Password?',
-                          style: TextStyle(color: Colors.purple.shade600),
+                            style: TextStyle(color: Color(0xFF2B9BD7))
                         ),
                       ),
                     ],
                   ),
                   SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Accueil() ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
+                      backgroundColor:  Color(0xFF2B9BD7),
                       padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -107,24 +113,24 @@ class _ConnectPageState extends State<ConnectPage> {
     );
   }
 
-  // La méthode _buildTextField reste identique
+
   Widget _buildTextField(String label, IconData icon, {bool isPassword = false}) {
     return TextField(
       obscureText: isPassword,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: Colors.purple.shade400),
+        prefixIcon: Icon(icon, color: Color(0xFF2B9BD7)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.purple.shade200),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.purple.shade200),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.purple.shade400),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
         ),
         filled: true,
         fillColor: Colors.grey.shade50,
