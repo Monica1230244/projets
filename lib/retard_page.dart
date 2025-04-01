@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:projets/heure_supp.dart';
 
+import 'constants.dart';
+
 class RetardPage extends StatefulWidget {
   final List<Map<String, String>> presences = [
     {"date": "2025-03-02", "heure": "09:40", "heure_depart": "18:00", "motif": "Permission", "status": "Validé"},
@@ -69,7 +71,7 @@ class _RetardPageState extends State<RetardPage> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Colors.deepPurple[400]!, Colors.deepPurple[600]!],
+                    colors: [primaryColor],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
