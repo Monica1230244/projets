@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projets/absence_page.dart';
+import 'package:projets/accueil_page.dart';
+import 'package:projets/constants.dart';
 
 class HeuresSupplementairesPage extends StatefulWidget {
   final List<Map<String, String>> presences = [
@@ -51,7 +53,7 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
               fontSize: 20,
             )),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor:primaryColor,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -61,7 +63,7 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AbsencePage()),
+              MaterialPageRoute(builder: (context) => Accueil()),
             );
           },
         ),
@@ -76,7 +78,7 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Colors.deepPurple[400]!, Colors.deepPurple[600]!],
+                  colors: [primaryColor, Colors.deepPurple[400]!],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
@@ -173,7 +175,7 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
                             ),
                             child: Icon(
                               Icons.access_time,
-                              color: Colors.deepPurple,
+                              color:primaryColor,
                               size: 20,
                             ),
                           ),
@@ -209,14 +211,14 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
                                     '$hours h',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.deepPurple,
+                                      color: primaryColor,
                                     ),
                                   ),
                                   Text(
                                     '$remainingMinutes min',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.deepPurple[300],
+                                      color: primaryColor,
                                     ),
                                   ),
                                 ],

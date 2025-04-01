@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projets/connect_page.dart';
+import 'package:projets/constants.dart';
+import 'package:projets/user.dart';
 
 
 
@@ -29,7 +31,7 @@ class _AbsencePageState extends State<AbsencePage> {
 
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ConnectPage()  ),
+              MaterialPageRoute(builder: (context) => Presence() ),
             );
 
           },
@@ -37,7 +39,7 @@ class _AbsencePageState extends State<AbsencePage> {
         title: Text('Absences',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: primaryColor ,
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -57,7 +59,7 @@ class _AbsencePageState extends State<AbsencePage> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Colors.deepPurple[400]!, Colors.deepPurple[600]!],
+                    colors: [primaryColor, Colors.deepPurple[400]!],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -129,12 +131,12 @@ class _AbsencePageState extends State<AbsencePage> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.deepPurple.withOpacity(0.1),
+                              color: Colors.red[400],
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(
                               Icons.do_not_disturb,
-                              color: Colors.red,
+                              color: Colors.white ,
                               size: 20,
                             ),
                           ),

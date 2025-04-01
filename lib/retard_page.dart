@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projets/accueil_page.dart';
 import 'package:projets/heure_supp.dart';
 
 import 'constants.dart';
@@ -44,7 +45,7 @@ class _RetardPageState extends State<RetardPage> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => HeuresSupplementairesPage()),
+              MaterialPageRoute(builder: (context) => Accueil()),
             );
           },
         ),
@@ -71,7 +72,7 @@ class _RetardPageState extends State<RetardPage> {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [primaryColor],
+                    colors: [primaryColor, Colors.deepPurple[400]!],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -161,13 +162,13 @@ class _RetardPageState extends State<RetardPage> {
                     break;
                   case "En attente":
                     statusIcon = Icons.hourglass_empty;
-                    statusColor = Colors.orange;
+                    statusColor = Colors.orangeAccent;
                     statusText = "En attente";
                     break;
                   default:
                     statusIcon = Icons.help;
                     statusColor = Colors.grey;
-                    statusText = "Non défini";
+                    statusText = "";
                     break;
                 }
 
@@ -188,7 +189,7 @@ class _RetardPageState extends State<RetardPage> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.deepPurple.withOpacity(0.1),
+                              color: primaryColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(
@@ -213,23 +214,24 @@ class _RetardPageState extends State<RetardPage> {
                                 Text(
                                   'Arrivée: ${retard['heure']} ${hasRetard ? '(Retard: ${minutesRetard} min)' : ''}',
                                 ),
-                                if (hasRetard) SizedBox(height: 4),
+                                if (hasRetard) SizedBox(height: 2),
                                 if (hasRetard)
-                                  Text(
-                                    'Pénalité: $penalite FCFA',
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                SizedBox(height: 4),
+                                  SizedBox(height: 4),
                                 if (retard['motif']!.isNotEmpty)
                                   Text(
                                     'Motif de retard : ${retard['motif']}',
-                                    style: TextStyle(color:  Color(0xFF2B9BD7)),
+                                    style: TextStyle(color:  Colors.black),
                                   ),
                                 SizedBox(height: 6),
+                                Text(
+                                  'Pénalité: $penalite FCFA',
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 if (retard['motif']!.isNotEmpty)
+                                  SizedBox(height: 6),
                                   Row(
                                     children: [
                                       Icon(statusIcon, color: statusColor, size: 16),
