@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:projets/absence_page.dart';
-import 'package:projets/retard_page.dart';
+import 'package:projets/constants.dart';
 
 class PresencePage extends StatefulWidget {
   @override
@@ -12,13 +11,24 @@ class _PresencePageState extends State<PresencePage> {
   String _selectedFilter = 'Tous';
   bool _showOnlyProblems = false;
 
-  final List<String> _filterOptions = ['Tous', 'Présents', 'Absents', 'Retards'];
+
+  final List<String> _filterOptions = ['Tous', 'Présents', 'Absents', 'Retards', 'Heures Supp'];
 
   final List<Map<String, dynamic>> _allPresences = [
-    {'date': '02 Mars 2023', 'heure_arrivee': '08:15', 'heure_depart': '17:30', 'status': 'Présent', 'color': Colors.green, 'hasProblem': false},
-    {'date': '03 Mars 2023', 'heure_arrivee': '09:05', 'heure_depart': '17:45', 'status': 'Retard (35min)', 'color': Colors.orange, 'hasProblem': true},
-    {'date': '04 Mars 2023', 'heure_arrivee': '-', 'heure_depart': '-', 'status': 'Absent', 'color': Colors.red, 'hasProblem': true},
-    {'date': '05 Mars 2023', 'heure_arrivee': '08:00', 'heure_depart': '18:15', 'status': 'Présent', 'color': Colors.green, 'hasProblem': false},
+    {'date': '02 Mars 2025', 'heure_arrivee': '08:15', 'heure_depart': '17:30', 'status': 'Présent', 'color': Colors.green, 'hasProblem': false},
+    {'date': '03 Mars 2025', 'heure_arrivee': '09:05', 'heure_depart': '17:45', 'status': 'Retard ', 'color': Colors.orange, 'hasProblem': true},
+    {'date': '04 Mars 2025', 'heure_arrivee': '-', 'heure_depart': '-', 'status': 'Absent', 'color': Colors.red, 'hasProblem': true},
+    {'date': '05 Mars 2025', 'heure_arrivee': '08:00', 'heure_depart': '18:15', 'status': 'Présent', 'color': Colors.green, 'hasProblem': false},
+    {'date': '06 Mars 2025', 'heure_arrivee': '08:00', 'heure_depart': '19:30', 'status': 'Heures Supp ', 'color': Colors.blue, 'hasProblem': false},
+    {'date': '07 Mars 2025', 'heure_arrivee': '-', 'heure_depart': '-', 'status': 'Absent', 'color':  Colors.red, 'hasProblem': true},
+    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'retard', 'color': Colors.orange, 'hasProblem': false},
+    {'date': '07 Mars 2025', 'heure_arrivee': '-', 'heure_depart': '-', 'status': 'Absent', 'color':  Colors.red, 'hasProblem': true},
+    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'retard', 'color': Colors.orange, 'hasProblem': false},
+    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'retard', 'color': Colors.orange, 'hasProblem': false},
+    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'retard', 'color': Colors.orange, 'hasProblem': false},
+    {'date': '02 Mars 2025', 'heure_arrivee': '08:15', 'heure_depart': '17:30', 'status': 'Présent', 'color': Colors.green, 'hasProblem': false},
+    {'date': '06 Mars 2025', 'heure_arrivee': '08:00', 'heure_depart': '19:30', 'status': 'Heures Supp ', 'color': Colors.blue, 'hasProblem': false},
+    {'date': '06 Mars 2025', 'heure_arrivee': '08:00', 'heure_depart': '19:30', 'status': 'Heures Supp ', 'color': Colors.blue, 'hasProblem': false},
   ];
 
   List<Map<String, dynamic>> get _filteredPresences {
@@ -27,9 +37,18 @@ class _PresencePageState extends State<PresencePage> {
       bool matchesProblemFilter = !_showOnlyProblems || presence['hasProblem'];
 
       switch (_selectedFilter) {
-        case 'Présents': matchesStatus = presence['status'] == 'Présent'; break;
-        case 'Absents': matchesStatus = presence['status'] == 'Absent'; break;
-        case 'Retards': matchesStatus = presence['status'].contains('Retard'); break;
+        case 'Présents':
+          matchesStatus = presence['status'] == 'Présent';
+          break;
+        case 'Absents':
+          matchesStatus = presence['status'] == 'Absent';
+          break;
+        case 'Retards':
+          matchesStatus = presence['status'].contains('Retard');
+          break;
+        case 'Heures Supp': // Nouveau cas pour le filtre Heures Supp
+          matchesStatus = presence['status'].contains('Heures Supp');
+          break;
       }
 
       return matchesStatus && matchesProblemFilter;
@@ -47,7 +66,8 @@ class _PresencePageState extends State<PresencePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Suivie de Présence", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: Color(0xFF003366),
+        backgroundColor: primaryColor,
+        centerTitle: true,
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -56,12 +76,11 @@ class _PresencePageState extends State<PresencePage> {
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-
       ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.white],
+            colors: [Colors.white, primaryColor],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -70,15 +89,8 @@ class _PresencePageState extends State<PresencePage> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              // Section Filtres (sans sélection de date)
               _buildFilterSection(),
               SizedBox(height: 20),
-
-              // Liste des cartes statiques (non défilantes)
-              _buildStatCardsRow(),
-              SizedBox(height: 20),
-
-              // Liste des présences
               Expanded(
                 child: _buildPresenceList(),
               ),
@@ -86,61 +98,6 @@ class _PresencePageState extends State<PresencePage> {
           ),
         ),
       ),
-
-    );
-  }
-
-  Widget _buildStatCardsRow() {
-    final presentCount = _filteredPresences.where((p) => p['status'] == 'Présent').length;
-    final absentCount = _filteredPresences.where((p) => p['status'] == 'Absent').length;
-    final lateCount = _filteredPresences.where((p) => p['status'].contains('Retard')).length;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildStatCard("Présence", "$presentCount", Icons.check_circle, Colors.green),
-        _buildStatCard("Absence", "$absentCount", Icons.cancel, Colors.red, isClickable: true),
-        _buildStatCard("Retard", "$lateCount", Icons.timer, Colors.orange, isClickable: true),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, {bool isClickable = false}) {
-    final card = Container(
-      width: 110,
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(45),
-        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, spreadRadius: 2)],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            backgroundColor: color.withOpacity(0.2),
-            radius: 20,
-            child: Icon(icon, color: color, size: 24),
-          ),
-          SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
-        ],
-      ),
-    );
-
-    if (!isClickable) return card;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(45),
-      onTap: () {
-        if (title == "Absence") {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => AbsencePage()));
-        } else if (title == "Retard") {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => RetardPage()));
-        }
-      },
-      child: card,
     );
   }
 
@@ -168,10 +125,10 @@ class _PresencePageState extends State<PresencePage> {
                         _selectedFilter = selected ? option : 'Tous';
                       });
                     },
-                    selectedColor: Color(0xFF003366).withOpacity(0.2),
-                    checkmarkColor: Color(0xFF003366),
+                    selectedColor: primaryColor.withOpacity(0.2),
+                    checkmarkColor: primaryColor,
                     labelStyle: TextStyle(
-                      color: _selectedFilter == option ? Color(0xFF003366) : Colors.grey,
+                      color: _selectedFilter == option ? primaryColor : Color(0xFF2B9BD7),
                     ),
                   ),
                 );
@@ -188,23 +145,30 @@ class _PresencePageState extends State<PresencePage> {
     if (_filteredPresences.isEmpty) {
       return Center(child: Text('Aucune donnée correspondant aux filtres'));
     }
-
     return ListView.builder(
       itemCount: _filteredPresences.length,
       itemBuilder: (context, index) {
         final presence = _filteredPresences[index];
+
+        final statusText = presence['status'].contains('Retard')
+            ? 'Retard'
+            : presence['status'].contains('Heures Supp')
+            ? 'Heures Supp'
+            : presence['status'];
+
         return Card(
           margin: EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15)),
+            borderRadius: BorderRadius.circular(15),
+          ),
           elevation: 2,
           child: Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(12),
             child: Row(
               children: [
                 Container(
                   width: 8,
-                  height: 60,
+                  height: 80,
                   decoration: BoxDecoration(
                     color: presence['color'],
                     borderRadius: BorderRadius.circular(10),
@@ -228,8 +192,9 @@ class _PresencePageState extends State<PresencePage> {
                   ),
                 ),
                 Chip(
+                  labelPadding: EdgeInsets.symmetric(horizontal: 4),
                   backgroundColor: presence['color'].withOpacity(0.2),
-                  label: Text(presence['status'], style: TextStyle(color: presence['color'])),
+                  label: Text(statusText, style: TextStyle(color: presence['color'])),
                 ),
               ],
             ),
