@@ -91,9 +91,6 @@ class _CreateEmployeeState extends State<CreateEmployee> {
           _isLoading = false;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Compte employé créé avec succès (simulation)')),
-        );
 
         _formKey.currentState?.reset();
         setState(() {
@@ -115,14 +112,16 @@ class _CreateEmployeeState extends State<CreateEmployee> {
           fontWeight: FontWeight.bold,
         )),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
+        child:
+      Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 24),
+              SizedBox(height: 5),
               TextFormField(
                 controller: _firstNameController,
                 cursorColor: Colors.black,
@@ -212,6 +211,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
               ),
               SizedBox(height: 16),
               DropdownButtonFormField<String>(
+                dropdownColor: Colors.white,
                 value: _selectedDepartement,
                 decoration: InputDecoration(
                   labelText: 'Département*',
@@ -230,15 +230,19 @@ class _CreateEmployeeState extends State<CreateEmployee> {
                   ),
                   prefixIcon: Icon(Icons.business, color: Colors.blue),
                 ),
+
                 hint: Text('Sélectionnez un département'),
                 items: _departement.map((String department) {
                   return DropdownMenuItem<String>(
+
                     value: department,
+
                     child: Text(department),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
                   setState(() {
+
                     _selectedDepartement = newValue;
                   });
                   _autoGeneratePassword();
@@ -252,6 +256,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
               ),
               SizedBox(height: 16),
               DropdownButtonFormField<String>(
+                dropdownColor: Colors.white,
                 value: _selectedPoste,
                 decoration: InputDecoration(
                   labelText: 'Poste*',
@@ -351,7 +356,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
                   return null;
                 },
               ),
-              SizedBox(height: 50),
+              SizedBox(height: 30),
               _isLoading
                   ? Center(child: CircularProgressIndicator())
                   : SizedBox(
@@ -380,6 +385,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

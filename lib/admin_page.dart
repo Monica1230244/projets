@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
@@ -260,6 +261,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
           child: Container(
             padding: const EdgeInsets.all(20),
+            color: Colors.white,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -271,10 +273,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                 TextField(
                   controller: _filterController,
-                  decoration: const InputDecoration(
+                  cursorColor: Colors.black,
+                  decoration: InputDecoration(
                     labelText: 'Rechercher par nom',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.search),
+                    labelStyle: TextStyle(color:Color(0xFF000000) ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFF000000))
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF000000)),
+                    ),
+                    prefixIcon: const Icon(Icons.search),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -292,6 +303,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       initialDateRange: _selectedDateRange,
                       locale: const Locale('fr', 'FR'),
                     );
+
                     if (picked != null) {
                       setState(() {
                         _selectedDateRange = picked;
@@ -301,24 +313,44 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.black),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.calendar_today, size: 20),
                         const SizedBox(width: 10),
-                        Text(
-                          _selectedDateRange == null
-                              ? 'Sélectionner une période'
-                              : 'Du ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} au '
-                              '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}',
-                          style: const TextStyle(fontSize: 16),
+                        Expanded(
+                          child: RichText(
+
+                            text: TextSpan(
+                              style: const TextStyle(fontSize: 16, color: Colors.black),
+                              children: <TextSpan>[
+                                if (_selectedDateRange == null)
+                                  const TextSpan(text: 'Sélectionner une période'),
+                                if (_selectedDateRange != null) ...[
+                                  const TextSpan(text: 'Du '),
+                                  TextSpan(
+                                    text: DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start),
+                                    style: const TextStyle(color: Colors.blue),
+                                  ),
+                                  const TextSpan(text: ' au '),
+                                  TextSpan(
+                                    text: DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end),
+                                    style: const TextStyle(color: Colors.blue),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
+
+
                 const SizedBox(height: 25),
                 Row(
                   children: [
@@ -333,7 +365,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             _selectedFilter = 'Tous';
                           });
                         },
-                        child: const Text('Annuler'),
+                        child: const Text('Annuler',style: TextStyle(color: Colors.black)),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -341,8 +373,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
+
                         },
-                        child: const Text('Appliquer'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text('Appliquer',style: TextStyle(color: Colors.black),),
                       ),
                     ),
                   ],
@@ -486,16 +525,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   const Divider(height: 30),
                 ],
                 if (employee['validationStatus'] == 'En attente') ...[
-                  const Text('ACTION ADMINISTRATEUR',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  const Text('Commentaire (obligatoire si rejet):',
+                  const Text('Commentaire :',
                       style: TextStyle(fontStyle: FontStyle.italic)),
                   TextField(
                     controller: _rejectionController,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: 'Motif du rejet...',
+                      hintText: 'Motif du rejet',
                     ),
                     maxLines: 3,
                   ),
@@ -523,7 +559,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _updateStatus(employee, 'Validé', '');
                   Navigator.pop(context);
                 },
-                child: const Text('VALIDER',style: TextStyle(color: Colors.black),),
                     style: ElevatedButton.styleFrom(
                     backgroundColor:  Colors.white,
                     padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
@@ -531,6 +566,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     borderRadius: BorderRadius.circular(30),
         ),
               ),
+                child: const Text('VALIDER',style: TextStyle(color: Colors.black),),
         ),
             ] else ...[
               TextButton(
