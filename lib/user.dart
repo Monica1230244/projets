@@ -1,187 +1,257 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+import 'package:projets/absence_page.dart';
+import 'package:projets/heure_supp.dart';
 import 'package:projets/presence_page.dart';
 import 'package:projets/retard_page.dart';
-import 'absence_page.dart';
-import 'heure_supp.dart';
+import 'accueil_page.dart';
+import 'constants.dart';
 
 class Presence extends StatefulWidget {
+  const Presence({Key? key}) : super(key: key);
+
   @override
   _PresenceState createState() => _PresenceState();
 }
 
 class _PresenceState extends State<Presence> {
-  DateTime? _selectedDate;
-  DateTime? _selectedEndDate;
-  int _selectedIndex = 0;
+  late DateTime _selectedDate;
+  late DateTime _selectedEndDate;
+
+  // Valeurs simulées
+  int presenceCount = 12;
+  int totalJours = 30;
+  int absenceCount = 3;
+  int retardCount = 2;
+  int heuresSuppCount = 5;
+  double penaliteMontant = 1500.0;
+
+  @override
+  void initState() {
+    super.initState();
+    initializeDateFormatting('fr_FR', null);
+    _selectedDate = DateTime.now();
+    _selectedEndDate = DateTime.now().add(const Duration(days: 30));
+  }
 
   Future<void> _selectDate(BuildContext context, bool isStart) async {
-    DateTime? pickedDate = await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: isStart ? _selectedDate ?? DateTime.now() : _selectedEndDate ?? DateTime.now(),
+      initialDate: isStart ? _selectedDate : _selectedEndDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      locale: const Locale('fr', 'FR'),
     );
 
     if (pickedDate != null) {
       setState(() {
         if (isStart) {
           _selectedDate = pickedDate;
-          _selectedEndDate = DateTime(pickedDate.year, pickedDate.month + 1, 0);
+          if (_selectedEndDate.isBefore(pickedDate)) {
+            _selectedEndDate = pickedDate.add(const Duration(days: 30));
+            totalJours = 30;
+          }
         } else {
           _selectedEndDate = pickedDate;
+          totalJours = _selectedEndDate.difference(_selectedDate).inDays + 1;
         }
       });
     }
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  String _formatDate(DateTime date) {
+    return DateFormat('dd MMM yyyy', 'fr_FR').format(date);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Suivie de Présence", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: Color(0xFF003366),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications, size: 35, color: Colors.white),
-          ),
-        ],
+        title: const Text("Suivi de Présence"),
+        centerTitle: true,
+        backgroundColor: primaryColor,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Accueil()),
+            );
+          },
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.white],
+            colors: [Colors.white, primaryColor],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              _buildDateSelection(),
-              SizedBox(height: 20),
-              Expanded(
-                child: ListView(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                // Sélection de période
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildStatCard("Présence", "22 / 30", Icons.check_circle, Colors.green, onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => PresencePage()),
-                      );
-                    }),
-                    SizedBox(height: 33),
-                    _buildStatCard("Absence", "8 / 30", Icons.cancel, Colors.grey, onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AbsencePage()),
-                      );
-                    }),
-                    SizedBox(height: 33),
-                    _buildStatCard("Retard", "13 min", Icons.timer, Colors.brown, onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => RetardPage()),
-                      );
-                    }),
-                    SizedBox(height: 33),
-                    _buildStatCard("Pénalité", "5.000 FCFA", Icons.money_off, Colors.black, onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Presence()),
-                      );
-                    }),
-                    SizedBox(height: 33),
-                    _buildStatCard("Heures Supp", "19 min", Icons.access_time, Colors.teal, isLarge: true, onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HeuresSupplementairesPage()),
-                      );
-                    }),
+                    Column(
+                      children: [
+                        const Text("Du", style: TextStyle(color: Colors.black)),
+                        const SizedBox(height: 5),
+                        GestureDetector(
+                          onTap: () => _selectDate(context, true),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today, size: 20),
+                                const SizedBox(width: 8),
+                                Text(_formatDate(_selectedDate)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        const Text("Au", style: TextStyle(color: Colors.black)),
+                        const SizedBox(height: 5),
+                        GestureDetector(
+                          onTap: () => _selectDate(context, false),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today, size: 20),
+                                const SizedBox(width: 8),
+                                Text(_formatDate(_selectedEndDate)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 50),
+
+                // Options avec Chips
+                _buildOptionTile(
+                  icon: Icons.check_circle,
+                  color: Colors.green,
+                  text: "Présence",
+                  count: "$presenceCount/$totalJours",
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PresencePage()),
+                  ),
+                ),
+                _buildOptionTile(
+                  icon: Icons.cancel,
+                  color: Colors.red,
+                  text: "Absence",
+                  count: "$absenceCount/$totalJours",
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AbsencePage()),
+                  ),
+                ),
+                _buildOptionTile(
+                  icon: Icons.timer,
+                  color: Colors.orange,
+                  text: "Retard",
+                  count: "$retardCount",
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => RetardPage()),
+                  ),
+                ),
+                _buildOptionTile(
+                  icon: Icons.access_time,
+                  color: Colors.blue,
+                  text: "Heures Supp",
+                  count: "$heuresSuppCount h",
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HeuresSupplementairesPage()),
+                  ),
+                ),
+                _buildPenaltyTile(),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDateSelection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text("Du", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-        SizedBox(width: 10),
-        _datePickerButton("Du", _selectedDate, () => _selectDate(context, true), style: TextStyle(color: Colors.black)),
-        SizedBox(width: 10),
-        Text("Au", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-        SizedBox(width: 10),
-        _datePickerButton("Au", _selectedEndDate, () => _selectDate(context, false), style: TextStyle(color: Colors.black)),
-      ],
-    );
-  }
-
-  Widget _datePickerButton(String label, DateTime? date, VoidCallback onTap, {required TextStyle style}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_today, color: Color(0xFF003366), size: 25),
-            SizedBox(width: 10),
-            Text(
-              date == null ? "Date" : "${date.day}/${date.month}/${date.year}",
-              style: TextStyle(fontWeight: FontWeight.bold),
+  Widget _buildOptionTile({
+    required IconData icon,
+    required Color color,
+    required String text,
+    required String count,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 50),
+      child: ListTile(
+        leading: Icon(icon, color: color),
+        title: Text(text),
+        trailing: Chip(
+          label: Text(
+            count,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
             ),
-          ],
+          ),
+          backgroundColor: color.withOpacity(0.2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
+        onTap: onTap,
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color iconColor, {bool isLarge = false, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(45),
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, spreadRadius: 2)],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              backgroundColor: iconColor.withOpacity(0.2),
-              radius: 25,
-              child: Icon(icon, color: iconColor, size: 30),
+  Widget _buildPenaltyTile() {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 50),
+      child: ListTile(
+        leading: Icon(Icons.money_off, color: Colors.purple),
+        title: Text("Pénalité"),
+        trailing: Chip(
+          label: Text(
+            "${penaliteMontant.toStringAsFixed(0)} DA",
+            style: TextStyle(
+              color: Colors.purple,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(width: 15),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
-                SizedBox(height: 5),
-                Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey[700])),
-              ],
-            ),
-          ],
+          ),
+          backgroundColor: Colors.purple.withOpacity(0.2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
+        onTap: () {},
       ),
     );
   }

@@ -9,8 +9,6 @@ class PresencePage extends StatefulWidget {
 class _PresencePageState extends State<PresencePage> {
   int _selectedIndex = 0;
   String _selectedFilter = 'Tous';
-  bool _showOnlyProblems = false;
-
 
   final List<String> _filterOptions = ['Tous', 'Présents', 'Absents', 'Retards', 'Heures Supp'];
 
@@ -21,11 +19,11 @@ class _PresencePageState extends State<PresencePage> {
     {'date': '05 Mars 2025', 'heure_arrivee': '08:00', 'heure_depart': '18:15', 'status': 'Présent', 'color': Colors.green, 'hasProblem': false},
     {'date': '06 Mars 2025', 'heure_arrivee': '08:00', 'heure_depart': '19:30', 'status': 'Heures Supp ', 'color': Colors.blue, 'hasProblem': false},
     {'date': '07 Mars 2025', 'heure_arrivee': '-', 'heure_depart': '-', 'status': 'Absent', 'color':  Colors.red, 'hasProblem': true},
-    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'retard', 'color': Colors.orange, 'hasProblem': false},
+    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'Retard', 'color': Colors.orange, 'hasProblem': false},
     {'date': '07 Mars 2025', 'heure_arrivee': '-', 'heure_depart': '-', 'status': 'Absent', 'color':  Colors.red, 'hasProblem': true},
-    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'retard', 'color': Colors.orange, 'hasProblem': false},
-    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'retard', 'color': Colors.orange, 'hasProblem': false},
-    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'retard', 'color': Colors.orange, 'hasProblem': false},
+    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'Retard', 'color': Colors.orange, 'hasProblem': false},
+    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'Retard', 'color': Colors.orange, 'hasProblem': false},
+    {'date': '08 Mars 2025', 'heure_arrivee': '9:30', 'heure_depart': '19:00', 'status': 'Retard', 'color': Colors.orange, 'hasProblem': false},
     {'date': '02 Mars 2025', 'heure_arrivee': '08:15', 'heure_depart': '17:30', 'status': 'Présent', 'color': Colors.green, 'hasProblem': false},
     {'date': '06 Mars 2025', 'heure_arrivee': '08:00', 'heure_depart': '19:30', 'status': 'Heures Supp ', 'color': Colors.blue, 'hasProblem': false},
     {'date': '06 Mars 2025', 'heure_arrivee': '08:00', 'heure_depart': '19:30', 'status': 'Heures Supp ', 'color': Colors.blue, 'hasProblem': false},
@@ -34,7 +32,7 @@ class _PresencePageState extends State<PresencePage> {
   List<Map<String, dynamic>> get _filteredPresences {
     return _allPresences.where((presence) {
       bool matchesStatus = true;
-      bool matchesProblemFilter = !_showOnlyProblems || presence['hasProblem'];
+
 
       switch (_selectedFilter) {
         case 'Présents':
@@ -46,15 +44,14 @@ class _PresencePageState extends State<PresencePage> {
         case 'Retards':
           matchesStatus = presence['status'].contains('Retard');
           break;
-        case 'Heures Supp': // Nouveau cas pour le filtre Heures Supp
+        case 'Heures Supp':
           matchesStatus = presence['status'].contains('Heures Supp');
           break;
       }
 
-      return matchesStatus && matchesProblemFilter;
+      return matchesStatus;
     }).toList();
   }
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;

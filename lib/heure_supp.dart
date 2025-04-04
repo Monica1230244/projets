@@ -69,171 +69,180 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
         ),
 
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [primaryColor, Colors.deepPurple[400]!],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.deepPurple.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, primaryColor],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [primaryColor, Colors.deepPurple[400]!],
                   ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'TOTAL HEURES SUPPLEMENTAIRES',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      formatDuree(totalMinutes),
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-
-
-          Expanded(
-            child: heuresSupList.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.hourglass_empty,
-                    size: 48,
-                    color: Colors.grey[400],
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Aucune heure supplémentaire',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                ],
-              ),
-            )
-                : ListView.builder(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-              itemCount: heuresSupList.length,
-              itemBuilder: (context, index) {
-                final presence = heuresSupList[index];
-                final minutes = calculerMinutesSupplementaires(presence['heure_depart']!);
-                final hours = minutes ~/ 60;
-                final remainingMinutes = minutes % 60;
-
-                return Card(
-                  margin: EdgeInsets.only(bottom: 24),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  elevation: 1,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {},
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Row(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.deepPurple.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(14),
+                          Text(
+                            'TOTAL HEURES SUPPLEMENTAIRES',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 16,
                             ),
-                            child: Icon(
-                              Icons.access_time,
-                              color:primaryColor,
-                              size: 20,
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  presence['date']!,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Départ à ${presence['heure_depart']}',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    '$hours h',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: primaryColor,
-                                    ),
-                                  ),
-                                  Text(
-                                    '$remainingMinutes min',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: primaryColor,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            ],
                           ),
                         ],
                       ),
-                    ),
+                      SizedBox(height: 16),
+                      Text(
+                        formatDuree(totalMinutes),
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ),
             ),
-          ),
-        ],
+
+
+            Expanded(
+              child: heuresSupList.isEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.hourglass_empty,
+                      size: 48,
+                      color: Colors.grey[400],
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Aucune heure supplémentaire',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                  ],
+                ),
+              )
+                  : ListView.builder(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                itemCount: heuresSupList.length,
+                itemBuilder: (context, index) {
+                  final presence = heuresSupList[index];
+                  final minutes = calculerMinutesSupplementaires(presence['heure_depart']!);
+                  final hours = minutes ~/ 60;
+                  final remainingMinutes = minutes % 60;
+
+                  return Card(
+                    margin: EdgeInsets.only(bottom: 24),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    elevation: 1,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {},
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Colors.deepPurple.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                Icons.access_time,
+                                color:primaryColor,
+                                size: 20,
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    presence['date']!,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Départ à ${presence['heure_depart']}',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      '$hours h',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      '$remainingMinutes min',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

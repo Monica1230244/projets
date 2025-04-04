@@ -59,202 +59,211 @@ class _RetardPageState extends State<RetardPage> {
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [primaryColor, Colors.deepPurple[400]!],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'TOTAL RETARDS',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      '$totalMinutesRetard minutes',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Pénalité: $totalPenalite FCFA',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '(5000 FCFA par tranche de 10 minutes)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, primaryColor],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-
-          if (totalMinutesRetard == 0)
+        ),
+        child: Column(
+          children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Aucun retard enregistré.',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Color(0xFF2B9BD7),
-                  fontWeight: FontWeight.bold,
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ),
-            ),
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              itemCount: widget.presences.length,
-              itemBuilder: (context, index) {
-                final retard = widget.presences[index];
-                final minutesRetard = calculerMinutesRetard(retard['heure']!);
-                final hasRetard = minutesRetard > 0;
-                final penalite = (minutesRetard ~/ 10) * penalitePar10Min;
-
-                IconData statusIcon;
-                Color statusColor;
-                String statusText;
-
-                switch (retard['status']) {
-                  case "Validé":
-                    statusIcon = Icons.check_circle;
-                    statusColor = Colors.green;
-                    statusText = "Validé";
-                    break;
-                  case "Rejeté":
-                    statusIcon = Icons.cancel;
-                    statusColor = Colors.red;
-                    statusText = "Rejeté";
-                    break;
-                  case "En attente":
-                    statusIcon = Icons.hourglass_empty;
-                    statusColor = Colors.orangeAccent;
-                    statusText = "En attente";
-                    break;
-                  default:
-                    statusIcon = Icons.help;
-                    statusColor = Colors.grey;
-                    statusText = "";
-                    break;
-                }
-
-                return Card(
-                  margin: EdgeInsets.only(bottom: 24),
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [primaryColor, Colors.deepPurple[400]!],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(22),
-                    onTap: () {},
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Row(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: primaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Icon(
-                              statusIcon,
-                              color: statusColor,
-                              size: 20,
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${retard['date']}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: hasRetard ? Colors.deepPurple : Colors.black,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Arrivée: ${retard['heure']} ${hasRetard ? '(Retard: ${minutesRetard} min)' : ''}',
-                                ),
-                                if (hasRetard) SizedBox(height: 2),
-                                if (hasRetard)
-                                  SizedBox(height: 4),
-                                if (retard['motif']!.isNotEmpty)
-                                  Text(
-                                    'Motif de retard : ${retard['motif']}',
-                                    style: TextStyle(color:  Colors.black),
-                                  ),
-                                SizedBox(height: 6),
-                                Text(
-                                  'Pénalité: $penalite FCFA',
-                                  style: TextStyle(
-                                    color: Colors.black87,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (retard['motif']!.isNotEmpty)
-                                  SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      Icon(statusIcon, color: statusColor, size: 16),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Status: $statusText',
-                                        style: TextStyle(color: statusColor),
-                                      ),
-                                    ],
-                                  ),
-                              ],
+                          Text(
+                            'TOTAL RETARDS',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 16,
                             ),
                           ),
                         ],
                       ),
-                    ),
+                      SizedBox(height: 16),
+                      Text(
+                        '$totalMinutesRetard minutes',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Pénalité: $totalPenalite FCFA',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '(5000 FCFA par tranche de 10 minutes)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ),
             ),
-          ),
-        ],
+
+            if (totalMinutesRetard == 0)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Aucun retard enregistré.',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Color(0xFF2B9BD7),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                itemCount: widget.presences.length,
+                itemBuilder: (context, index) {
+                  final retard = widget.presences[index];
+                  final minutesRetard = calculerMinutesRetard(retard['heure']!);
+                  final hasRetard = minutesRetard > 0;
+                  final penalite = (minutesRetard ~/ 10) * penalitePar10Min;
+
+                  IconData statusIcon;
+                  Color statusColor;
+                  String statusText;
+
+                  switch (retard['status']) {
+                    case "Validé":
+                      statusIcon = Icons.check_circle;
+                      statusColor = Colors.green;
+                      statusText = "Validé";
+                      break;
+                    case "Rejeté":
+                      statusIcon = Icons.cancel;
+                      statusColor = Colors.red;
+                      statusText = "Rejeté";
+                      break;
+                    case "En attente":
+                      statusIcon = Icons.hourglass_empty;
+                      statusColor = Colors.orangeAccent;
+                      statusText = "En attente";
+                      break;
+                    default:
+                      statusIcon = Icons.help;
+                      statusColor = Colors.grey;
+                      statusText = "";
+                      break;
+                  }
+
+                  return Card(
+                    margin: EdgeInsets.only(bottom: 24),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(22),
+                      onTap: () {},
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                statusIcon,
+                                color: statusColor,
+                                size: 20,
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${retard['date']}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: hasRetard ? Colors.deepPurple : Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Arrivée: ${retard['heure']} ${hasRetard ? '(Retard: ${minutesRetard} min)' : ''}',
+                                  ),
+                                  if (hasRetard) SizedBox(height: 2),
+                                  if (hasRetard)
+                                    SizedBox(height: 4),
+                                  if (retard['motif']!.isNotEmpty)
+                                    Text(
+                                      'Motif de retard : ${retard['motif']}',
+                                      style: TextStyle(color:  Colors.black),
+                                    ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    'Pénalité: $penalite FCFA',
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (retard['motif']!.isNotEmpty)
+                                    SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Icon(statusIcon, color: statusColor, size: 16),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Status: $statusText',
+                                          style: TextStyle(color: statusColor),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
