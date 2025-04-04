@@ -19,7 +19,7 @@ class _PresenceState extends State<Presence> {
   late DateTime _selectedDate;
   late DateTime _selectedEndDate;
 
-  // Valeurs simulées
+
   int presenceCount = 12;
   int totalJours = 30;
   int absenceCount = 3;
@@ -42,6 +42,19 @@ class _PresenceState extends State<Presence> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
       locale: const Locale('fr', 'FR'),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Color(0xFF2B9BD7),
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedDate != null) {
@@ -67,31 +80,22 @@ class _PresenceState extends State<Presence> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Suivi de Présence"),
-        centerTitle: true,
-        backgroundColor: primaryColor,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
+        title: const Text("Tableau de bord",style: TextStyle(color:Colors.black , fontWeight: FontWeight.bold, fontSize: 26),),
+        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Accueil()),
+            Navigator.pop(
+              context
+
             );
           },
         ),
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, primaryColor],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -103,21 +107,21 @@ class _PresenceState extends State<Presence> {
                 children: [
                   Column(
                     children: [
-                      const Text("Du", style: TextStyle(color: Colors.black)),
+                      const Text("Du", style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,)),
                       const SizedBox(height: 5),
                       GestureDetector(
                         onTap: () => _selectDate(context, true),
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black),
+                            border: Border.all(color: primaryColor),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today, size: 20),
+                              const Icon(Icons.calendar_today, size: 20 ,color:Colors.blueAccent),
                               const SizedBox(width: 8),
-                              Text(_formatDate(_selectedDate)),
+                              Text(_formatDate(_selectedDate), style: TextStyle(color: Color(0xFF2B9BD7)), ),
                             ],
                           ),
                         ),
@@ -126,21 +130,21 @@ class _PresenceState extends State<Presence> {
                   ),
                   Column(
                     children: [
-                      const Text("Au", style: TextStyle(color: Colors.black)),
+                      const Text("Au", style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold)),
                       const SizedBox(height: 5),
                       GestureDetector(
                         onTap: () => _selectDate(context, false),
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black),
+                            border: Border.all(color: primaryColor),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today, size: 20),
+                              const Icon(Icons.calendar_today, size: 20 , color:Colors.blueAccent),
                               const SizedBox(width: 8),
-                              Text(_formatDate(_selectedEndDate)),
+                              Text(_formatDate(_selectedEndDate), style: TextStyle(color: Color(0xFF2B9BD7)),),
                             ],
                           ),
                         ),
@@ -176,7 +180,7 @@ class _PresenceState extends State<Presence> {
                 icon: Icons.timer,
                 color: Colors.orange,
                 text: "Retard",
-                count: "$retardCount",
+                count: "$retardCount/$totalJours",
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => RetardPage()),
@@ -208,48 +212,80 @@ class _PresenceState extends State<Presence> {
     required VoidCallback onTap,
   }) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 50),
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(text),
-        trailing: Chip(
-          label: Text(
-            count,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
+      color: Colors.white,
+      margin: const EdgeInsets.only(bottom: 30),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            leading: Icon(icon, color: color, size: 28),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(text, style: TextStyle(fontSize: 18)),
+                Container(
+                  width: 80,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    count,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          backgroundColor: color.withOpacity(0.2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
         ),
-        onTap: onTap,
       ),
     );
   }
 
   Widget _buildPenaltyTile() {
     return Card(
-      margin: const EdgeInsets.only(bottom: 50),
-      child: ListTile(
-        leading: Icon(Icons.money_off, color: Colors.purple),
-        title: Text("Pénalité"),
-        trailing: Chip(
-          label: Text(
-            "${penaliteMontant.toStringAsFixed(0)} DA",
-            style: TextStyle(
-              color: Colors.purple,
-              fontWeight: FontWeight.bold,
+      color: Colors.white,
+      margin: const EdgeInsets.only(bottom: 30),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () {},
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            leading: Icon(Icons.money_off, color: Colors.purple, size: 28),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Pénalité", style: TextStyle(fontSize: 18)),
+                Container(
+                  width: 80,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    "${penaliteMontant.toStringAsFixed(0)} FR",
+                    style: TextStyle(
+                      color: Colors.purple,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          backgroundColor: Colors.purple.withOpacity(0.2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
         ),
-        onTap: () {},
       ),
     );
   }

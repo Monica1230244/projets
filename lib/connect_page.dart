@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:projets/accueil_page.dart';
+import 'package:projets/constants.dart';
 
 class ConnectPage extends StatefulWidget {
   @override
@@ -7,6 +8,8 @@ class ConnectPage extends StatefulWidget {
 }
 
 class _ConnectPageState extends State<ConnectPage> {
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,7 +20,7 @@ class _ConnectPageState extends State<ConnectPage> {
             end: Alignment.bottomCenter,
             colors: [
               Colors.white,
-              Color(0xFF2B9BD7),
+              primaryColor,
             ],
           ),
         ),
@@ -25,7 +28,7 @@ class _ConnectPageState extends State<ConnectPage> {
           child: Container(
             width: MediaQuery.of(context).size.width * 0.9,
             constraints: BoxConstraints(maxWidth: 500),
-            padding: EdgeInsets.all(32),
+            padding: EdgeInsets.symmetric(vertical: 20),
             decoration: BoxDecoration(
               color: Colors.white38,
               borderRadius: BorderRadius.circular(20),
@@ -49,9 +52,16 @@ class _ConnectPageState extends State<ConnectPage> {
                     fit: BoxFit.contain,
                   ),
                   SizedBox(height: 10),
-                  _buildTextField('Email', Icons.email),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildTextField('Email', Icons.email),
+                  ),
                   SizedBox(height: 20),
-                  _buildTextField('Mot de passe ', Icons.lock, isPassword: true),
+
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildTextField('Mot de passe', Icons.lock, isPassword: true),
+                  ),
                   SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -61,20 +71,20 @@ class _ConnectPageState extends State<ConnectPage> {
                           Checkbox(
                             value: true,
                             onChanged: (value) {},
-                            fillColor: MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                                return  Color(0xFF2B9BD7);
+                            fillColor: WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                                return primaryColor;
                               },
                             ),
                           ),
-                          Text('Remember me'),
+                          Text('Se rappeler de moi'),
                         ],
                       ),
                       TextButton(
                         onPressed: () {},
                         child: Text(
-                          'Forget Password?',
-                            style: TextStyle(color: Color(0xFF2B9BD7))
+                          'Mot de passe oublié ?',
+                          style: TextStyle(color: Colors.black),
                         ),
                       ),
                     ],
@@ -84,11 +94,11 @@ class _ConnectPageState extends State<ConnectPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Accueil() ),
+                        MaterialPageRoute(builder: (context) => Accueil()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:  Color(0xFF2B9BD7),
+                      backgroundColor: primaryColor,
                       padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -104,6 +114,7 @@ class _ConnectPageState extends State<ConnectPage> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 30)
                 ],
               ),
             ),
@@ -113,12 +124,12 @@ class _ConnectPageState extends State<ConnectPage> {
     );
   }
 
-
   Widget _buildTextField(String label, IconData icon, {bool isPassword = false}) {
     return TextField(
       obscureText: isPassword,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: Color(0xFF2B9BD7)),
         prefixIcon: Icon(icon, color: Color(0xFF2B9BD7)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -126,14 +137,14 @@ class _ConnectPageState extends State<ConnectPage> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7), width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7), width: 2.0),
         ),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: Colors.white,
       ),
     );
   }

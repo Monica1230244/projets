@@ -61,27 +61,20 @@ class _PresencePageState extends State<PresencePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("Suivie de Présence", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: primaryColor,
-        centerTitle: true,
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Text("Suivie de Présence", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(color: Colors.white),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, primaryColor],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -99,42 +92,40 @@ class _PresencePageState extends State<PresencePage> {
   }
 
   Widget _buildFilterSection() {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
-      ),
-      child: Column(
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _filterOptions.map((option) {
-                return Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(option),
-                    selected: _selectedFilter == option,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedFilter = selected ? option : 'Tous';
-                      });
-                    },
-                    selectedColor: primaryColor.withOpacity(0.2),
-                    checkmarkColor: primaryColor,
-                    labelStyle: TextStyle(
-                      color: _selectedFilter == option ? primaryColor : Color(0xFF2B9BD7),
-                    ),
+    return Column(
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _filterOptions.map((option) {
+              return Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(option),
+                  selected: _selectedFilter == option,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedFilter = selected ? option : 'Tous';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: primaryColor.withOpacity(0.2),
+                  checkmarkColor: primaryColor,
+                  labelStyle: TextStyle(
+                    color: _selectedFilter == option ? primaryColor : Color(0xFF2B9BD7),
                   ),
-                );
-              }).toList(),
-            ),
+
+              side: BorderSide(
+              color: _selectedFilter == option ? primaryColor : Colors.black,
+              width: 1,
+              ),
+                )
+              );
+            }).toList(),
           ),
-          SizedBox(height: 10),
-        ],
-      ),
+        ),
+        SizedBox(height: 10),
+      ],
     );
   }
 
@@ -154,6 +145,7 @@ class _PresencePageState extends State<PresencePage> {
             : presence['status'];
 
         return Card(
+          color: Colors.white,
           margin: EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
@@ -189,7 +181,7 @@ class _PresencePageState extends State<PresencePage> {
                   ),
                 ),
                 Chip(
-                  labelPadding: EdgeInsets.symmetric(horizontal: 4),
+                  labelPadding: EdgeInsets.symmetric(horizontal: 1),
                   backgroundColor: presence['color'].withOpacity(0.2),
                   label: Text(statusText, style: TextStyle(color: presence['color'])),
                 ),

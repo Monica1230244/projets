@@ -16,7 +16,6 @@ class AbsencePage extends StatefulWidget {
   @override
   _AbsencePageState createState() => _AbsencePageState();
 }
-
 class _AbsencePageState extends State<AbsencePage> {
 
   @override
@@ -24,35 +23,17 @@ class _AbsencePageState extends State<AbsencePage> {
     final totalAbsences = widget.absences.length;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        title: Text("Suivie de Présence", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        backgroundColor: Colors.white,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Presence() ),
-            );
-
-          },
-        ),
-        title: Text('Absences',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        centerTitle: true,
-        backgroundColor: primaryColor ,
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
+
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, primaryColor],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
         child: Column(
 
           children: [
@@ -65,11 +46,7 @@ class _AbsencePageState extends State<AbsencePage> {
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [primaryColor, Colors.deepPurple[400]!],
-                    ),
+                    color: primaryColor,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.all(20.0),
@@ -110,7 +87,7 @@ class _AbsencePageState extends State<AbsencePage> {
                   'Aucune absence enregistrée.',
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.deepPurple,
+                    color: primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -124,6 +101,7 @@ class _AbsencePageState extends State<AbsencePage> {
                   final absence = widget.absences[index];
 
                   return Card(
+                    color: Colors.white,
                     margin: EdgeInsets.only(bottom: 24),
                     elevation: 2,
                     shape: RoundedRectangleBorder(
@@ -158,7 +136,7 @@ class _AbsencePageState extends State<AbsencePage> {
                                     '${absence['date']}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.deepPurple,
+                                      color: primaryColor,
                                     ),
                                   ),
                                 ],
