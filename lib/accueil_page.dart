@@ -2,35 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:projets/user.dart';
 import 'admin_page.dart';
 import 'package:intl/intl.dart';
+import 'connect_admin.dart';
 
 
 class Accueil extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: Center(child: Text("Waouh Monde"),)
-      ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Center(child: Text("Waouh Monde",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),),
+          SizedBox(height: 40),
           CircleAvatar(
-            radius: 50,
-            backgroundImage: AssetImage('assets/image/img2.jpg'),
+            radius: 70,
+            backgroundColor: Colors.white, 
+            backgroundImage: AssetImage('assets/images/logo1.png'),
           ),
-          SizedBox(height: 30),
-          MenuButton(icon: Icons.login, text: "Marquer arrivée", onTap: () => marquerArrivee(context)),
-          MenuButton(icon: Icons.logout, text: "Marquer départ", onTap: () => marquerDepart(context)),
+          SizedBox(height: 25),
+          MenuButton(icon: Icons.login, text: "Marquer arrivée",
+              onTap: () => marquerArrivee(context)
+          ),
+          SizedBox(height:25 ),
+          MenuButton(icon: Icons.logout, text: "Marquer départ",onTap: () => marquerDepart(context)
+          ),
+          SizedBox(height:25 ),
           MenuButton(icon: Icons.dashboard, text: "Consulter tableau de bord personnel", onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => Presence() ),
             );
           }),
+          SizedBox(height:25 ),
           MenuButton(icon: Icons.analytics, text: "Consulter tableau de bord", onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Rapport()),
+              MaterialPageRoute(builder: (context) => AdminDashboard()),
+            );
+          }),
+          SizedBox(height:25),
+
+          MenuButton(icon: Icons.person, text: "Créer compte utilisateur", onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CreateEmployee()),
             );
           }),
         ],
@@ -138,19 +153,35 @@ class MenuButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
 
-  MenuButton({required this.icon, required this.text, required this.onTap});
+  const MenuButton({
+    super.key,
+    required this.icon,
+    required this.text,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          minimumSize: Size(double.infinity, 50),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: Colors.blue),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
         ),
-        onPressed: onTap,
-        icon: Icon(icon),
-        label: Text(text),
       ),
     );
   }
