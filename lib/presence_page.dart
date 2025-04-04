@@ -189,7 +189,7 @@ class _PresencePageState extends State<PresencePage> {
                   ),
                 ),
                 Chip(
-                  labelPadding: EdgeInsets.symmetric(horizontal: 4),
+                  labelPadding: EdgeInsets.symmetric(horizontal: 1),
                   backgroundColor: presence['color'].withOpacity(0.2),
                   label: Text(statusText, style: TextStyle(color: presence['color'])),
                 ),
