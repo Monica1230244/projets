@@ -91,7 +91,6 @@ class _CreateEmployeeState extends State<CreateEmployee> {
           _isLoading = false;
         });
 
-
         _formKey.currentState?.reset();
         setState(() {
           _selectedDepartement = null;
