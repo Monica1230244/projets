@@ -93,109 +93,107 @@ class _PresenceState extends State<Presence> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                // Sélection de période
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                      children: [
-                        const Text("Du", style: TextStyle(color: Colors.black)),
-                        const SizedBox(height: 5),
-                        GestureDetector(
-                          onTap: () => _selectDate(context, true),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.black),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.calendar_today, size: 20),
-                                const SizedBox(width: 8),
-                                Text(_formatDate(_selectedDate)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        const Text("Au", style: TextStyle(color: Colors.black)),
-                        const SizedBox(height: 5),
-                        GestureDetector(
-                          onTap: () => _selectDate(context, false),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.black),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.calendar_today, size: 20),
-                                const SizedBox(width: 8),
-                                Text(_formatDate(_selectedEndDate)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 50),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
 
-                // Options avec Chips
-                _buildOptionTile(
-                  icon: Icons.check_circle,
-                  color: Colors.green,
-                  text: "Présence",
-                  count: "$presenceCount/$totalJours",
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => PresencePage()),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Column(
+                    children: [
+                      const Text("Du", style: TextStyle(color: Colors.black)),
+                      const SizedBox(height: 5),
+                      GestureDetector(
+                        onTap: () => _selectDate(context, true),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today, size: 20),
+                              const SizedBox(width: 8),
+                              Text(_formatDate(_selectedDate)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                _buildOptionTile(
-                  icon: Icons.cancel,
-                  color: Colors.red,
-                  text: "Absence",
-                  count: "$absenceCount/$totalJours",
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AbsencePage()),
+                  Column(
+                    children: [
+                      const Text("Au", style: TextStyle(color: Colors.black)),
+                      const SizedBox(height: 5),
+                      GestureDetector(
+                        onTap: () => _selectDate(context, false),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today, size: 20),
+                              const SizedBox(width: 8),
+                              Text(_formatDate(_selectedEndDate)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                ],
+              ),
+              const SizedBox(height: 50),
+
+
+              _buildOptionTile(
+                icon: Icons.check_circle,
+                color: Colors.green,
+                text: "Présence",
+                count: "$presenceCount/$totalJours",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PresencePage()),
                 ),
-                _buildOptionTile(
-                  icon: Icons.timer,
-                  color: Colors.orange,
-                  text: "Retard",
-                  count: "$retardCount",
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => RetardPage()),
-                  ),
+              ),
+              _buildOptionTile(
+                icon: Icons.cancel,
+                color: Colors.red,
+                text: "Absence",
+                count: "$absenceCount/$totalJours",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AbsencePage()),
                 ),
-                _buildOptionTile(
-                  icon: Icons.access_time,
-                  color: Colors.blue,
-                  text: "Heures Supp",
-                  count: "$heuresSuppCount h",
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => HeuresSupplementairesPage()),
-                  ),
+              ),
+              _buildOptionTile(
+                icon: Icons.timer,
+                color: Colors.orange,
+                text: "Retard",
+                count: "$retardCount",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RetardPage()),
                 ),
-                _buildPenaltyTile(),
-              ],
-            ),
+              ),
+              _buildOptionTile(
+                icon: Icons.access_time,
+                color: Colors.blue,
+                text: "Heures Supp",
+                count: "$heuresSuppCount h",
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HeuresSupplementairesPage()),
+                ),
+              ),
+              _buildPenaltyTile(),
+            ],
           ),
         ),
       ),
