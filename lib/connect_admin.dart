@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:projets/constants.dart';
+import 'package:flutter/services.dart';
+import 'dart:math';
 
 class CreateEmployee extends StatefulWidget {
   @override
@@ -12,13 +13,20 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   final _positionController = TextEditingController();
 
-  String? _selectedDepartment;
+  String? _selectedDepartement;
   bool _isLoading = false;
 
-  final List<String> _departments = [
+  final List<String> _departement = [
+    'Informatique',
+    'Commercial',
+    'Sécrétariat',
+    'Directeur Général'
+  ];
+
+  String? _selectedPoste;
+  final List<String> _poste = [
     'Developpeur',
     'Gestionnaire Support & Qualité',
     'Gestionnaire Commercial',
@@ -28,13 +36,47 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _firstNameController.addListener(_autoGeneratePassword);
+    _lastNameController.addListener(_autoGeneratePassword);
+    _emailController.addListener(_autoGeneratePassword);
+    _positionController.addListener(_autoGeneratePassword);
+  }
+
+  String _generateRandomPassword() {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#\$%^&*()';
+    final random = Random();
+    return String.fromCharCodes(Iterable.generate(
+      12,
+          (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+    ));
+  }
+
+  void _autoGeneratePassword() {
+    if (_firstNameController.text.isNotEmpty &&
+        _lastNameController.text.isNotEmpty &&
+        _emailController.text.isNotEmpty &&
+        _selectedDepartement != null &&
+        _selectedPoste != null &&
+        _passwordController.text.isEmpty) {
+      setState(() {
+        _passwordController.text = _generateRandomPassword();
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
     _positionController.dispose();
+    _firstNameController.removeListener(_autoGeneratePassword);
+    _lastNameController.removeListener(_autoGeneratePassword);
+    _emailController.removeListener(_autoGeneratePassword);
+    _positionController.removeListener(_autoGeneratePassword);
     super.dispose();
   }
 
@@ -44,21 +86,19 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         _isLoading = true;
       });
 
-
       Future.delayed(Duration(seconds: 2), () {
         setState(() {
           _isLoading = false;
         });
 
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Compte employé créé avec succès (simulation)')),
         );
 
-
         _formKey.currentState?.reset();
         setState(() {
-          _selectedDepartment = null;
+          _selectedDepartement = null;
+          _selectedPoste = null;
         });
       });
     }
@@ -67,180 +107,278 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Créer un compte employé',style: TextStyle(
+        backgroundColor: Colors.white,
+        title: Text('Créer un compte employé', style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-        ),),
+        )),
       ),
-      body:
-      Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 24),
-            TextFormField(
-              controller: _firstNameController,
-              decoration: InputDecoration(
-                labelText: 'Nom*',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ce champ est obligatoire';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              controller: _lastNameController,
-              decoration: InputDecoration(
-                labelText: 'Prénom*',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ce champ est obligatoire';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: 'Email*',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email),
-              ),
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ce champ est obligatoire';
-                }
-                if (!value.contains('@') || !value.contains('.')) {
-                  return 'Email invalide';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              controller: _positionController,
-              decoration: InputDecoration(
-                labelText: 'Poste*',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.work),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ce champ est obligatoire';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedDepartment,
-              decoration: InputDecoration(
-                labelText: 'Département*',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.business),
-              ),
-              hint: Text('Sélectionnez un département'),
-              items: _departments.map((String department) {
-                return DropdownMenuItem<String>(
-                  value: department,
-                  child: Text(department),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedDepartment = newValue;
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ce champ est obligatoire';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Identifiants de connexion',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: 'Mot de passe*',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
-              ),
-              obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ce champ est obligatoire';
-                }
-                if (value.length < 8) {
-                  return '8 caractères minimum';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 16),
-            TextFormField(
-              controller: _confirmPasswordController,
-              decoration: InputDecoration(
-                labelText: 'Confirmer mot de passe*',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
-
-              ),
-              obscureText: true,
-              validator: (value) {
-                if (value != _passwordController.text) {
-                  return 'Les mots de passe ne correspondent pas';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 32),
-            _isLoading
-                ? Center(child: CircularProgressIndicator())
-                : SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _createEmployee,
-                style: ElevatedButton.styleFrom(
-
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 24),
+              TextFormField(
+                controller: _firstNameController,
+                cursorColor: Colors.black,
+                decoration: InputDecoration(
+                  labelText: 'Nom*',
+                  labelStyle: TextStyle(color: Color(0xFF000000)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF2B9BD7))
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  prefixIcon: Icon(Icons.person, color: Colors.blue),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'CRÉER LE COMPTE',
-                    style: TextStyle(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ce champ est obligatoire';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _lastNameController,
+                cursorColor: Colors.black,
+                decoration: InputDecoration(
+                  labelText: 'Prénom*',
+                  labelStyle: TextStyle(color: Color(0xFF000000)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF2B9BD7))
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  prefixIcon: Icon(Icons.person, color: Colors.blue),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ce champ est obligatoire';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _emailController,
+                cursorColor: Colors.black,
+                decoration: InputDecoration(
+                  labelText: 'Email*',
+                  labelStyle: TextStyle(color: Color(0xFF000000)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF2B9BD7))
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  prefixIcon: Icon(Icons.email, color: Colors.blue),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ce champ est obligatoire';
+                  }
+                  if (!value.contains('@') || !value.contains('.')) {
+                    return 'Email invalide';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedDepartement,
+                decoration: InputDecoration(
+                  labelText: 'Département*',
+                  labelStyle: TextStyle(color: Color(0xFF000000)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF2B9BD7))
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  prefixIcon: Icon(Icons.business, color: Colors.blue),
+                ),
+                hint: Text('Sélectionnez un département'),
+                items: _departement.map((String department) {
+                  return DropdownMenuItem<String>(
+                    value: department,
+                    child: Text(department),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedDepartement = newValue;
+                  });
+                  _autoGeneratePassword();
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ce champ est obligatoire';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedPoste,
+                decoration: InputDecoration(
+                  labelText: 'Poste*',
+                  labelStyle: TextStyle(color: Color(0xFF000000)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF2B9BD7))
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  prefixIcon: Icon(Icons.business, color: Colors.blue),
+                ),
+                hint: Text('Sélectionnez un poste'),
+                items: _poste.map((String poste) {
+                  return DropdownMenuItem<String>(
+                    value: poste,
+                    child: Text(poste),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedPoste = newValue;
+                  });
+                  _autoGeneratePassword();
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ce champ est obligatoire';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 24),
+              Text(
+                'Identifiants de connexion',
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                      color: Colors.black
+                ),
+              ),
+              SizedBox(height: 20),
+              TextFormField(
+                controller: _passwordController,
+                cursorColor: Colors.black,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Mot de passe*',
+                  labelStyle: TextStyle(color: Color(0xFF000000)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF2B9BD7))
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+                  ),
+                  prefixIcon: Icon(Icons.lock, color: Colors.blue),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_passwordController.text.isNotEmpty)
+                        Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.check_circle, color: Colors.green),
+                        ),
+                      IconButton(
+                        icon: Icon(Icons.copy, color: Colors.blue),
+                        onPressed: () {
+                          if (_passwordController.text.isNotEmpty) {
+                            Clipboard.setData(ClipboardData(text: _passwordController.text));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Mot de passe copié')),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ce champ est obligatoire';
+                  }
+                  if (value.length < 8) {
+                    return '8 caractères minimum';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 50),
+              _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _createEmployee,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Text(
+                      'CRÉER LE COMPTE',
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
