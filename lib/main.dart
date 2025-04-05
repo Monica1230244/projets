@@ -13,7 +13,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     initializeDateFormatting('fr_FR', null);
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [

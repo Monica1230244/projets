@@ -31,19 +31,16 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
     }
     return (heures - 18) * 60 + minutes - 30;
   }
-
   String formatDuree(int totalMinutes) {
     if (totalMinutes >= 60) {
       return '${totalMinutes ~/ 60}h ${totalMinutes % 60}min';
     }
     return '${totalMinutes}min';
   }
-
   @override
   Widget build(BuildContext context) {
     final heuresSupList = widget.presences.where((p) => calculerMinutesSupplementaires(p['heure_depart']!) > 0).toList();
     final totalMinutes = heuresSupList.fold(0, (sum, p) => sum + calculerMinutesSupplementaires(p['heure_depart']!));
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -59,11 +56,9 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
           onPressed: () {
             Navigator.pop(
                 context
-
             );
           },
         ),
-
       ),
       body: Column(
         children: [
@@ -104,8 +99,6 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
               ),
             ),
           ),
-
-
           Expanded(
             child: heuresSupList.isEmpty
                 ? Center(
