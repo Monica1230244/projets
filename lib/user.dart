@@ -6,10 +6,8 @@ import 'package:projets/heure_supp.dart';
 import 'package:projets/presence_page.dart';
 import 'package:projets/retard_page.dart';
 import 'constants.dart';
-
 class Presence extends StatefulWidget {
   const Presence({Key? key}) : super(key: key);
-
   @override
   _PresenceState createState() => _PresenceState();
 }
@@ -22,7 +20,6 @@ class _PresenceState extends State<Presence> {
   int retardCount = 2;
   int heuresSuppCount = 5;
   double penaliteMontant = 1500.0;
-
   @override
   void initState() {
     super.initState();
@@ -30,7 +27,6 @@ class _PresenceState extends State<Presence> {
     _selectedDate = DateTime.now();
     _selectedEndDate = DateTime.now().add(const Duration(days: 30));
   }
-
   Future<void> _selectDate(BuildContext context, bool isStart) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,

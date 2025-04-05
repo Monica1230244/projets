@@ -6,10 +6,7 @@ class ConnectPage extends StatefulWidget {
   @override
   State<ConnectPage> createState() => _ConnectPageState();
 }
-
 class _ConnectPageState extends State<ConnectPage> {
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,7 +54,6 @@ class _ConnectPageState extends State<ConnectPage> {
                     child: _buildTextField('Email', Icons.email),
                   ),
                   SizedBox(height: 20),
-
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
                     child: _buildTextField('Mot de passe', Icons.lock, isPassword: true),
@@ -123,7 +119,6 @@ class _ConnectPageState extends State<ConnectPage> {
       ),
     );
   }
-
   Widget _buildTextField(String label, IconData icon, {bool isPassword = false}) {
     return TextField(
       obscureText: isPassword,

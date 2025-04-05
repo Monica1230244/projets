@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:projets/connect_page.dart';
 import 'package:projets/constants.dart';
-import 'package:projets/user.dart';
-
-
-
 class AbsencePage extends StatefulWidget {
   final List<Map<String, String>> absences = [
     {"date": "2025-03-02"},
@@ -12,7 +7,6 @@ class AbsencePage extends StatefulWidget {
     {"date": "2025-03-06"},
 
   ];
-
   @override
   _AbsencePageState createState() => _AbsencePageState();
 }
