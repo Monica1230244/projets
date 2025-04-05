@@ -17,11 +17,9 @@ class AbsencePage extends StatefulWidget {
   _AbsencePageState createState() => _AbsencePageState();
 }
 class _AbsencePageState extends State<AbsencePage> {
-
   @override
   Widget build(BuildContext context) {
     final totalAbsences = widget.absences.length;
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -32,10 +30,8 @@ class _AbsencePageState extends State<AbsencePage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-
       body: Container(
         child: Column(
-
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -96,7 +92,6 @@ class _AbsencePageState extends State<AbsencePage> {
                 itemCount: widget.absences.length,
                 itemBuilder: (context, index) {
                   final absence = widget.absences[index];
-
                   return Card(
                     color: Colors.white,
                     margin: EdgeInsets.only(bottom: 24),
