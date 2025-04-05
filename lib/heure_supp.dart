@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:projets/absence_page.dart';
-import 'package:projets/accueil_page.dart';
 import 'package:projets/constants.dart';
-import 'package:projets/user.dart';
+
 
 class HeuresSupplementairesPage extends StatefulWidget {
   final List<Map<String, String>> presences = [
@@ -130,7 +128,6 @@ class _HeuresSupplementairesPageState extends State<HeuresSupplementairesPage> {
                 final minutes = calculerMinutesSupplementaires(presence['heure_depart']!);
                 final hours = minutes ~/ 60;
                 final remainingMinutes = minutes % 60;
-
                 return Card(
                   color: Colors.white,
                   margin: EdgeInsets.only(bottom: 24),

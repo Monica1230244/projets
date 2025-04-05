@@ -5,7 +5,6 @@ import 'package:projets/absence_page.dart';
 import 'package:projets/heure_supp.dart';
 import 'package:projets/presence_page.dart';
 import 'package:projets/retard_page.dart';
-import 'accueil_page.dart';
 import 'constants.dart';
 
 class Presence extends StatefulWidget {
@@ -14,12 +13,9 @@ class Presence extends StatefulWidget {
   @override
   _PresenceState createState() => _PresenceState();
 }
-
 class _PresenceState extends State<Presence> {
   late DateTime _selectedDate;
   late DateTime _selectedEndDate;
-
-
   int presenceCount = 12;
   int totalJours = 30;
   int absenceCount = 3;
@@ -89,7 +85,6 @@ class _PresenceState extends State<Presence> {
           onPressed: () {
             Navigator.pop(
               context
-
             );
           },
         ),
@@ -101,7 +96,6 @@ class _PresenceState extends State<Presence> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -154,8 +148,6 @@ class _PresenceState extends State<Presence> {
                 ],
               ),
               const SizedBox(height: 50),
-
-
               _buildOptionTile(
                 icon: Icons.check_circle,
                 color: Colors.green,
@@ -203,7 +195,6 @@ class _PresenceState extends State<Presence> {
       ),
     );
   }
-
   Widget _buildOptionTile({
     required IconData icon,
     required Color color,
@@ -249,7 +240,6 @@ class _PresenceState extends State<Presence> {
       ),
     );
   }
-
   Widget _buildPenaltyTile() {
     return Card(
       color: Colors.white,
