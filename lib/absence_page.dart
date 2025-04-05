@@ -78,8 +78,6 @@ class _AbsencePageState extends State<AbsencePage> {
                 ),
               ),
             ),
-
-
             if (totalAbsences == 0)
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -92,7 +90,6 @@ class _AbsencePageState extends State<AbsencePage> {
                   ),
                 ),
               ),
-
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.symmetric(horizontal: 16),
