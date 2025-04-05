@@ -3,58 +3,68 @@ import 'package:projets/user.dart';
 import 'admin_page.dart';
 import 'package:intl/intl.dart';
 import 'connect_admin.dart';
+import 'menu_bouton.dart';
 
 
 class Accueil extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Center(child: Text("Waouh Monde",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),),
-          SizedBox(height: 40),
           CircleAvatar(
-            radius: 70,
-            backgroundColor: Colors.white, 
+            radius: 110,
+            backgroundColor: Colors.white,
             backgroundImage: AssetImage('assets/images/logo1.png'),
           ),
-          SizedBox(height: 25),
-          MenuButton(icon: Icons.login, text: "Marquer arrivée",
-              onTap: () => marquerArrivee(context)
+          MenuButton(
+            icon: Icons.login,
+            text: "Marquer arrivée",
+            onTap: () => marquerArrivee(context),
           ),
-          SizedBox(height:25 ),
-          MenuButton(icon: Icons.logout, text: "Marquer départ",onTap: () => marquerDepart(context)
+          MenuButton(
+            icon: Icons.logout,
+            text: "Marquer départ",
+            onTap: () => marquerDepart(context),
           ),
-          SizedBox(height:25 ),
-          MenuButton(icon: Icons.dashboard, text: "Consulter tableau de bord personnel", onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Presence() ),
-            );
-          }),
-          SizedBox(height:25 ),
-          MenuButton(icon: Icons.analytics, text: "Consulter tableau de bord", onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AdminDashboard()),
-            );
-          }),
-          SizedBox(height:25),
+          MenuButton(
+            icon: Icons.dashboard,
+            text: "Consulter tableau de bord personnel",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Presence()),
+              );
+            },
+          ),
+          MenuButton(
+            icon: Icons.analytics,
+            text: "Consulter tableau de bord",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AdminDashboard()),
+              );
+            },
+          ),
 
-          MenuButton(icon: Icons.person, text: "Créer compte utilisateur", onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CreateEmployee()),
-            );
-          }),
+          MenuButton(
+            icon: Icons.person,
+            text: "Créer compte utilisateur",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CreateEmployee()),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 }
-
-
 
 void marquerArrivee(BuildContext context) {
   DateTime now = DateTime.now();
@@ -89,7 +99,9 @@ void marquerArrivee(BuildContext context) {
                 if (motif.isNotEmpty) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Motif envoyé à l'administrateur : $motif")),
+                    SnackBar(
+                      content: Text("Motif envoyé à l'administrateur : $motif"),
+                    ),
                   );
                 }
               },
@@ -135,7 +147,9 @@ void marquerDepart(BuildContext context) {
                 if (motif.isNotEmpty) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Motif envoyé à l'administrateur : $motif")),
+                    SnackBar(
+                      content: Text("Motif envoyé à l'administrateur : $motif"),
+                    ),
                   );
                 }
               },
@@ -148,41 +162,3 @@ void marquerDepart(BuildContext context) {
   }
 }
 
-class MenuButton extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final VoidCallback onTap;
-
-  const MenuButton({
-    super.key,
-    required this.icon,
-    required this.text,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Row(
-          children: [
-            Icon(icon, size: 24, color: Colors.blue),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-}

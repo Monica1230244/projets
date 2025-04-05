@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
@@ -15,9 +16,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final TextEditingController _filterController = TextEditingController();
   final TextEditingController _rejectionController = TextEditingController();
   final TextEditingController _absenceMotifController = TextEditingController();
+  String _selectedFilter = 'Tous';
+  final List<String> _filterOptions = ['Tous', 'Présents', 'Absents', 'Retards', 'Heures Supp','Pénalité'];
 
   final List<Map<String, dynamic>> _employees = [
-
     {
       'name': 'Jean ',
       'arrival': '08:00',
@@ -67,7 +69,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       'status': 'Heure Supp',
       'overtimeMotif': 'Dossier urgent à terminer',
       'validationStatus': 'En attente',
-      'avatar': Icons.engineering,
+      'avatar': Icons.person,
     },
 
     {
@@ -93,7 +95,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       'penalty': _calculatePenalty('09:00'),
       'avatar': Icons.person,
     },
-    // Cas 6: Arrivé en retard (75 min)
+
     {
       'name': 'Prude',
       'arrival': '09:45',
@@ -215,6 +217,39 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
+  Widget _buildFilterSection() {
+    return Column(
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _filterOptions.map((option) {
+              return Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: FilterChip(
+                  label: Text(option),
+                  selected: _selectedFilter == option,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedFilter = selected ? option : 'Tous';
+                    });
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: Colors.blue[800]!.withOpacity(0.2),
+                  checkmarkColor: Colors.blue[800],
+                  labelStyle: TextStyle(
+                    color: _selectedFilter == option ? Colors.blue[800] : Colors.blue,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        SizedBox(height: 10),
+      ],
+    );
+  }
+
   Future<void> _showFilterDialog() async {
     await showModalBottomSheet(
       context: context,
@@ -226,6 +261,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
           child: Container(
             padding: const EdgeInsets.all(20),
+            color: Colors.white,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -235,13 +271,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 const SizedBox(height: 20),
 
-                // Champ de recherche par nom
                 TextField(
                   controller: _filterController,
-                  decoration: const InputDecoration(
+                  cursorColor: Colors.black,
+                  decoration: InputDecoration(
                     labelText: 'Rechercher par nom',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.search),
+                    labelStyle: TextStyle(color:Color(0xFF000000) ),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFF000000))
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF000000)),
+                    ),
+                    prefixIcon: const Icon(Icons.search),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -250,8 +294,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   },
                 ),
                 const SizedBox(height: 15),
-
-
                 InkWell(
                   onTap: () async {
                     final DateTimeRange? picked = await showDateRangePicker(
@@ -261,6 +303,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       initialDateRange: _selectedDateRange,
                       locale: const Locale('fr', 'FR'),
                     );
+
                     if (picked != null) {
                       setState(() {
                         _selectedDateRange = picked;
@@ -270,27 +313,44 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.black),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.calendar_today, size: 20),
                         const SizedBox(width: 10),
-                        Text(
-                          _selectedDateRange == null
-                              ? 'Sélectionner une période'
-                              : 'Du ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} au '
-                              '${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}',
-                          style: const TextStyle(fontSize: 16),
+                        Expanded(
+                          child: RichText(
+
+                            text: TextSpan(
+                              style: const TextStyle(fontSize: 16, color: Colors.black),
+                              children: <TextSpan>[
+                                if (_selectedDateRange == null)
+                                  const TextSpan(text: 'Sélectionner une période'),
+                                if (_selectedDateRange != null) ...[
+                                  const TextSpan(text: 'Du '),
+                                  TextSpan(
+                                    text: DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start),
+                                    style: const TextStyle(color: Colors.blue),
+                                  ),
+                                  const TextSpan(text: ' au '),
+                                  TextSpan(
+                                    text: DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end),
+                                    style: const TextStyle(color: Colors.blue),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 25),
-
-
                 Row(
                   children: [
                     Expanded(
@@ -301,9 +361,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           setState(() {
                             _searchQuery = '';
                             _selectedDateRange = null;
+                            _selectedFilter = 'Tous';
                           });
                         },
-                        child: const Text('Annuler'),
+                        child: const Text('Annuler',style: TextStyle(color: Colors.black)),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -311,8 +372,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
+
                         },
-                        child: const Text('Appliquer'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text('Appliquer',style: TextStyle(color: Colors.black),),
                       ),
                     ),
                   ],
@@ -325,13 +393,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-
   List<Map<String, dynamic>> get filteredEmployees {
     return _employees.where((emp) {
+      bool matchesStatus = true;
+
+      switch (_selectedFilter) {
+        case 'Présents':
+          matchesStatus = emp['status'] == 'Présent';
+          break;
+        case 'Absents':
+          matchesStatus = emp['status'] == 'Absent';
+          break;
+        case 'Retards':
+          matchesStatus = emp['status'].contains('Retard');
+          break;
+        case 'Heures Supp':
+          matchesStatus = emp['status'].contains('Heure Supp');
+          break;
+        case 'Pénalité':
+          matchesStatus = _isLate(emp['arrival']);
+          break;
+      }
 
       final nameMatch = _searchQuery.isEmpty ||
           emp['name'].toLowerCase().contains(_searchQuery.toLowerCase());
-
 
       bool dateMatch = true;
       if (_selectedDateRange != null) {
@@ -339,17 +424,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
             emp['date'].isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
       }
 
-      return nameMatch && dateMatch;
+      return matchesStatus && nameMatch && dateMatch;
     }).toList();
   }
-
 
   void _showAddAbsenceDialog() {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Ajouter une absence'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -393,6 +476,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text('Validation ${employee['name']}'),
           content: SingleChildScrollView(
             child: Column(
@@ -440,16 +524,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   const Divider(height: 30),
                 ],
                 if (employee['validationStatus'] == 'En attente') ...[
-                  const Text('ACTION ADMINISTRATEUR',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  const Text('Commentaire (obligatoire si rejet):',
+                  const Text('Commentaire :',
                       style: TextStyle(fontStyle: FontStyle.italic)),
                   TextField(
                     controller: _rejectionController,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: 'Motif du rejet...',
+                      hintText: 'Motif du rejet',
                     ),
                     maxLines: 3,
                   ),
@@ -472,16 +553,25 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: const Text('REJETER', style: TextStyle(color: Colors.red)),
               ),
               ElevatedButton(
+
                 onPressed: () {
                   _updateStatus(employee, 'Validé', '');
                   Navigator.pop(context);
                 },
-                child: const Text('VALIDER'),
+                    style: ElevatedButton.styleFrom(
+                    backgroundColor:  Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                    shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+        ),
               ),
+                child: const Text('VALIDER',style: TextStyle(color: Colors.black),),
+        ),
             ] else ...[
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('FERMER'),
+                child: const Text('FERMER',style: TextStyle(color: Colors.black),
+              ),
               ),
             ],
           ],
@@ -502,7 +592,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -513,123 +603,88 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         ),
         actions: [
-
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilterDialog,
           ),
         ],
       ),
-      body: _buildCurrentTab(),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Présence'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_off), label: 'Absence'),
-          BottomNavigationBarItem(icon: Icon(Icons.access_time), label: 'Retard'),
-          BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Heure supp'),
-          BottomNavigationBarItem(icon: Icon(Icons.money_off), label: 'Pénalité'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue[800],
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        onTap: _onItemTapped,
-      ),
-    );
-  }
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 25,horizontal: 20),
+        child: Column(
+          children: [
 
-  Widget _buildCurrentTab() {
-    final filteredEmployees = _employees.where((emp) {
-      bool statusMatch = false;
-      final hasLate = _isLate(emp['arrival']);
-      final hasOvertime = _isOvertime(emp['departure']);
-      final isAbsent = _isAbsent(emp);
+            SizedBox(height: 10),
+            _buildFilterSection(),
+            Expanded(
+              child: ListView.builder(
+                itemCount: filteredEmployees.length,
+                itemBuilder: (context, index) {
+                  final employee = filteredEmployees[index];
+                  final hasLate = _isLate(employee['arrival']);
+                  final hasOvertime = _isOvertime(employee['departure']);
+                  final isAbsent = _isAbsent(employee);
+                  final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
 
-      switch (_selectedIndex) {
-        case 0:
-          statusMatch = !hasLate && !hasOvertime && !isAbsent;
-          break;
-        case 1:
-          statusMatch = isAbsent;
-          break;
-        case 2:
-          statusMatch = hasLate;
-          break;
-        case 3:
-          statusMatch = hasOvertime;
-          break;
-        case 4:
-          statusMatch = hasLate;
-          break;
-      }
+                  return Card(
+                    color: Colors.white,
+                    margin: const EdgeInsets.all(5),
 
-      final nameMatch = _searchQuery.isEmpty ||
-          emp['name'].toLowerCase().contains(_searchQuery.toLowerCase());
-
-      bool dateMatch = true;
-      if (_selectedDateRange != null) {
-        dateMatch = emp['date'].isAfter(_selectedDateRange!.start) &&
-            emp['date'].isBefore(_selectedDateRange!.end);
-      }
-
-      return statusMatch && nameMatch && dateMatch;
-    }).toList();
-
-    return ListView.builder(
-      itemCount: filteredEmployees.length,
-      itemBuilder: (context, index) {
-        final employee = filteredEmployees[index];
-        final hasLate = _isLate(employee['arrival']);
-        final hasOvertime = _isOvertime(employee['departure']);
-        final isAbsent = _isAbsent(employee);
-        final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
-
-        return Card(
-          margin: const EdgeInsets.all(8),
-          child: ListTile(
-            leading: CircleAvatar(child: Icon(employee['avatar'])),
-            title: Text(employee['name'], style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.black)),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Statut: ${employee['status']}', style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black)),
-                Text('Date: ${DateFormat('dd/MM/yyyy').format(employee['date'])}', style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black)),
-                if (hasLate && _selectedIndex != 4)
-                  Text('Retard: $lateMinutes min', style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black)),
-                if (hasLate && _selectedIndex == 4)
-                  Text('Pénalité: ${_calculatePenaltyFromMinutes(lateMinutes)}',
-                      style: TextStyle(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                          backgroundColor: Colors.white,
+                          child: Icon(employee['avatar'],color: Colors.blue,)),
+                      title: Text(employee['name'], style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black)),
-                if (hasOvertime)
-                  Text('Heures supp: ${_calculateHeuresSupp(employee['departure'])}', style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black)),
-                if (isAbsent && employee['absenceMotif'] != null)
-                  Text('Motif: ${employee['absenceMotif']}',
-                      style: const TextStyle(fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.bold)),
-              ],
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Statut: ${employee['status']}', style: TextStyle(
+                              color: Colors.black)),
+                          Text('Date: ${DateFormat('dd/MM/yyyy').format(employee['date'])}', style: TextStyle(
+
+                              color: Colors.black)),
+                          if (hasLate && _selectedIndex != 4)
+                            Text('Retard: $lateMinutes min', style: TextStyle(
+
+                                color: Colors.black)),
+                          if (hasLate && _selectedIndex == 4)
+                            Text('Pénalité: ${_calculatePenaltyFromMinutes(lateMinutes)}',
+                                style: TextStyle(
+
+                                    color: Colors.black)),
+                          if (hasOvertime)
+                            Text('Heures supp: ${_calculateHeuresSupp(employee['departure'])}', style: TextStyle(
+
+                                color: Colors.black)),
+                          if (isAbsent && employee['absenceMotif'] != null)
+                            Text('Motif: ${employee['absenceMotif']}',
+                                style: const TextStyle(fontStyle: FontStyle.italic,
+                                    )),
+                        ],
+                      ),
+                      trailing: (hasLate || hasOvertime || isAbsent)
+                          ? _buildStatusBadge(employee['validationStatus'])
+                          : null,
+                      onTap: () {
+                        if (hasLate || hasOvertime || isAbsent) {
+                          _showValidationDialog(employee);
+                        }
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-            trailing: (hasLate || hasOvertime || isAbsent)
-                ? _buildStatusBadge(employee['validationStatus'])
-                : null,
-            onTap: () {
-              if (hasLate || hasOvertime || isAbsent) {
-                _showValidationDialog(employee);
-              }
-            },
-          ),
-        );
-      },
+          ],
+        ),
+      ),
+
+
+
+
+
     );
   }
 
@@ -638,7 +693,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       case 'Validé':
         return const Chip(
           label: Text('Validé'),
-          backgroundColor: Colors.green,
+          backgroundColor: Color(0xFF2B9BD7),
           labelStyle: TextStyle(color: Colors.white),
         );
       case 'Rejeté':
@@ -650,7 +705,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       default:
         return const Chip(
           label: Text('En attente'),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.grey,
           labelStyle: TextStyle(color: Colors.white),
         );
     }
