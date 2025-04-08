@@ -22,16 +22,19 @@ class _CreateEmployeeState extends State<CreateEmployee> {
     'Informatique',
     'Commercial',
     'Sécrétariat',
-    'Directeur Général'
+    'Direction Général'
   ];
 
   String? _selectedPoste;
   final List<String> _poste = [
-    'Developpeur',
+    'Developpeur web',
+    'Developpeur mobile',
+    'Stagiaire',
     'Gestionnaire Support & Qualité',
     'Gestionnaire Commercial',
+    'Gestionnaire Projet',
     'Designer',
-    'Sécrétariat',
+    'Sécrétaire',
     'Directeur Général'
   ];
 
