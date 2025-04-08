@@ -48,9 +48,8 @@ class _RetardPageState extends State<RetardPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Presence() ),
+            Navigator.pop(
+              context
             );
           },
         ),
