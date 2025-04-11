@@ -23,8 +23,6 @@ class ConnectPageState extends State<ConnectPage> {
 
   }
 
-
-
   String hashPassword(String password) {
     return Crypt.sha512(password, rounds: 10000, salt: "abcdefghijklmnop").toString();
   }
@@ -41,7 +39,7 @@ class ConnectPageState extends State<ConnectPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Veuillez remplir tous les champs'),
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.red,
           ),
         );
         return;
@@ -63,7 +61,6 @@ Logger().i(supabaseResponse);
         await authBox.put("email", emailController.text);*/
 
 
-
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => Accueil()),
@@ -81,7 +78,7 @@ Logger().i(supabaseResponse);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erreur : $e'),
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.red,
         ),
       );
     }

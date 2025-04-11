@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('fr', 'FR')],
-      home: ConnectPage(),
+      home: CreateEmployee(),
     );
   }
 }
