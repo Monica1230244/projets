@@ -1,6 +1,7 @@
 import 'package:crypt/crypt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:logger/logger.dart';
 import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,13 +21,20 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   final _addressController = TextEditingController();
   final _birthDateController = TextEditingController();
 
+  DateTime? _selectedDate;
+
+  String? _selectedtype;
   String? _selectedDepartement;
   String? _selectedPoste;
   bool _isLoading = false;
+
   List<Map<String, dynamic>> _departements = [];
   List<Map<String, dynamic>> _postes = [];
+  List<Map<String, dynamic>> _types = [];
 
   List<Map<String, dynamic>> getFilteredPostes() {
+    if (_selectedDepartement == null) return [];
+
     return _postes.where((poste) {
       final dept = poste['departement'] as Map<String, dynamic>?;
       return dept != null && dept['nom_departement'] == _selectedDepartement;
@@ -52,12 +60,19 @@ class _CreateEmployeeState extends State<CreateEmployee> {
 
       final postes = await Supabase.instance.client
           .from('poste')
-          .select('*, departement (id_departement, nom_departement)')
+          .select('*,departement (id_departement, nom_departement)')
           .order('nom_poste');
+
+      final type= await Supabase.instance.client
+          .from('type')
+          .select()
+          .order('nomtype');
+
 
       setState(() {
         _departements = List<Map<String, dynamic>>.from(departements);
         _postes = List<Map<String, dynamic>>.from(postes);
+        _types = List<Map<String, dynamic>>.from(type);
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,6 +118,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
     _addressController.dispose();
     _birthDateController.dispose();
     super.dispose();
+
   }
 
   Future<void> _createEmployee() async {
@@ -110,21 +126,28 @@ class _CreateEmployeeState extends State<CreateEmployee> {
 
     setState(() => _isLoading = true);
 
+
+    if (_selectedPoste == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Veuillez sélectionner un poste.')),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
     try {
-      final dept = _departements.firstWhere(
-        (d) => d['nom_departement'] == _selectedDepartement,
-      );
+      Logger().i(_selectedtype);
 
+      final type = _types.firstWhere(
+            (d) => d['nomtype'] == _selectedtype,
+      );
+      Logger().i(type);
       final poste = _postes.firstWhere((p) => p['nom_poste'] == _selectedPoste);
+      Logger().i(poste);
 
-      // Conversion de la date en timestamp
-      final birthDateParts = _birthDateController.text.split('/');
-      final birthDate = DateTime(
-        int.parse(birthDateParts[2]), // year
-        int.parse(birthDateParts[1]), // month
-        int.parse(birthDateParts[0]), // day
-      );
-      final birthDateTimestamp = birthDate.millisecondsSinceEpoch;
+      final birthDate = _selectedDate!;
+      final birthDateTimes = birthDate.toIso8601String();
+
+      Logger().i(birthDateTimes);
 
       final userData = {
         'nom': _firstNameController.text,
@@ -132,16 +155,27 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         'email': _emailController.text,
         'tel': _phoneController.text,
         'adresse': _addressController.text,
-        'datenaissance': birthDateTimestamp,
-        'idposte': poste['id'],
+        'datenaissance': birthDateTimes,
+        'idposte': poste['idposte'],
+        'idtype': type['idtype'],
         'motpasse':
             Crypt.sha512(
               _passwordController.text,
               rounds: 10000,
               salt: "abcdefghijklmnop",
             ).toString(),
-      };
 
+      };
+      Logger().i(userData);
+
+      if (userData['idposte'] == null) {
+        Logger().e(e);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ID du poste est manquant.')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
       await Supabase.instance.client.from('user').insert(userData);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -154,10 +188,12 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         _selectedPoste = null;
         _passwordController.clear();
       });
-    } catch (e) {
+    }  catch (e) {
+      Logger().e(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors de la création: ${e.toString()}')),
       );
+
     } finally {
       setState(() => _isLoading = false);
     }
@@ -176,57 +212,72 @@ class _CreateEmployeeState extends State<CreateEmployee> {
     return null;
   }
 
-  String? _validateBirthDate(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Ce champ est obligatoire';
-    }
-
-    final dateRegExp = RegExp(r'^\d{2}/\d{2}/\d{4}$');
-    if (!dateRegExp.hasMatch(value)) {
-      return 'Format invalide (JJ/MM/AAAA)';
-    }
-
-    try {
-      final parts = value.split('/');
-      final day = int.parse(parts[0]);
-      final month = int.parse(parts[1]);
-      final year = int.parse(parts[2]);
-
-      final daysInMonth = [
-        31,
-        _isLeapYear(year) ? 29 : 28,
-        31,
-        30,
-        31,
-        30,
-        31,
-        31,
-        30,
-        31,
-        30,
-        31,
-      ];
-      if (day < 1 || day > daysInMonth[month - 1]) {
-        return 'Date invalide';
-      }
-
-      final birthDate = DateTime(year, month, day);
-      final today = DateTime.now();
-
-      if (birthDate.isAfter(today)) {
-        return 'La date ne peut pas être dans le futur';
-      }
-    } catch (e) {
-      return 'Date invalide';
-    }
-
-    return null;
+  Widget _buildDatePickerField() {
+    return GestureDetector(
+      onTap: () => _selectDate(context),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: _birthDateController,
+          decoration: InputDecoration(
+            labelText: 'Date de naissance*',
+            labelStyle: TextStyle(color: Colors.black),
+            prefixIcon: Icon(Icons.calendar_today, color: Colors.blue),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+            ),
+          ),
+          validator: (value) {
+            if (_selectedDate == null && (value == null || value.isEmpty)) {
+              return 'Ce champ est obligatoire';
+            }
+            return null;
+          },
+        ),
+      ),
+    );
   }
 
-  bool _isLeapYear(int year) {
-    return (year % 4 == 0) && (year % 100 != 0) || (year % 400 == 0);
-  }
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Color(0xFF2B9BD7),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
 
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _birthDateController.text =
+        "${picked.day.toString().padLeft(2, '0')}/"
+            "${picked.month.toString().padLeft(2, '0')}/"
+            "${picked.year}";
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -278,12 +329,12 @@ class _CreateEmployeeState extends State<CreateEmployee> {
                     (v) => v!.isEmpty ? 'Ce champ est obligatoire' : null,
               ),
               SizedBox(height: 16),
-              _buildTextFormField(
-                controller: _birthDateController,
-                label: 'Date de naissance* (JJ/MM/AAAA)',
-                icon: Icons.calendar_today,
-                validator: _validateBirthDate,
-              ),
+              _buildDatePickerField(),
+
+              SizedBox(height: 16),
+
+              _buildtypeDropdown(),
+
               SizedBox(height: 16),
               _buildTextFormField(
                 controller: _emailController,
@@ -316,6 +367,34 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       ),
     );
   }
+
+
+  Widget _buildtypeDropdown() {
+    return DropdownButtonFormField<String>(
+      dropdownColor: Colors.white,
+      value: _selectedtype,
+      decoration: _buildInputDecoration('Type*', Icons.business),
+      hint: Text('Sélectionnez un Type'),
+      items:
+      _types.map<DropdownMenuItem<String>>((type) {
+        return DropdownMenuItem<String>(
+          value: type['nomtype'].toString(),
+          child: Text(type['nomtype'].toString()),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedtype = newValue;
+
+        });
+        _autoGeneratePassword();
+      },
+      validator: (value) => value == null ? 'Ce champ est obligatoire' : null,
+    );
+  }
+
+
+
 
   Widget _buildTextFormField({
     required TextEditingController controller,

@@ -6,6 +6,8 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:projets/connect_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'connect_admin.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
