@@ -41,7 +41,7 @@ class ConnectPageState extends State<ConnectPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Veuillez remplir tous les champs'),
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.red,
           ),
         );
         return;
@@ -81,7 +81,7 @@ Logger().i(supabaseResponse);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erreur : $e'),
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.red,
         ),
       );
     }
