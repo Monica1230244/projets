@@ -20,15 +20,10 @@ class ConnectPageState extends State<ConnectPage> {
   @override
   void initState() {
     super.initState();
-    loadSavedCredentials();
-  }
-
-  Future<void>  loadSavedCredentials() async {
-    final authBox = Hive.box('authBox');
-    final response= authBox.get("email");
-    Logger().i(response);
 
   }
+
+
 
   String hashPassword(String password) {
     return Crypt.sha512(password, rounds: 10000, salt: "abcdefghijklmnop").toString();
@@ -54,14 +49,15 @@ class ConnectPageState extends State<ConnectPage> {
 
       String hashedPassword = hashPassword(mdp);
 
-      final response = await Supabase.instance.client
+      final supabaseResponse = await Supabase.instance.client
           .from('user')
           .select()
           .eq('email', email)
           .eq('motpasse', hashedPassword)
           .maybeSingle();
+Logger().i(supabaseResponse);
 
-      if (response != null) {
+      if (supabaseResponse != null) {
 
         /*final authBox = Hive.box('authBox');
         await authBox.put("email", emailController.text);*/
@@ -76,11 +72,12 @@ class ConnectPageState extends State<ConnectPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Email ou mot de passe incorrect.'),
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
+      Logger().e(e) ;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erreur : $e'),
