@@ -2,6 +2,7 @@ import 'package:crypt/crypt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CreateEmployee extends StatefulWidget {
@@ -68,12 +69,15 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   }
 
   String _generateRandomPassword() {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#\$%^&*()';
+    const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#\$%^&*()';
     final random = Random();
-    return String.fromCharCodes(Iterable.generate(
-      12,
-          (_) => chars.codeUnitAt(random.nextInt(chars.length)),
-    ));
+    return String.fromCharCodes(
+      Iterable.generate(
+        12,
+        (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+      ),
+    );
   }
 
   void _autoGeneratePassword() {
@@ -108,12 +112,10 @@ class _CreateEmployeeState extends State<CreateEmployee> {
 
     try {
       final dept = _departements.firstWhere(
-              (d) => d['nom_departement'] == _selectedDepartement
+        (d) => d['nom_departement'] == _selectedDepartement,
       );
 
-      final poste = _postes.firstWhere(
-              (p) => p['nom_poste'] == _selectedPoste
-      );
+      final poste = _postes.firstWhere((p) => p['nom_poste'] == _selectedPoste);
 
       // Conversion de la date en timestamp
       final birthDateParts = _birthDateController.text.split('/');
@@ -132,13 +134,15 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         'adresse': _addressController.text,
         'datenaissance': birthDateTimestamp,
         'idposte': poste['id'],
-        'motpasse': Crypt.sha512(_passwordController.text, rounds: 10000, salt: "abcdefghijklmnop")
-            .toString(),
+        'motpasse':
+            Crypt.sha512(
+              _passwordController.text,
+              rounds: 10000,
+              salt: "abcdefghijklmnop",
+            ).toString(),
       };
 
-      await Supabase.instance.client
-          .from('user')
-          .insert(userData);
+      await Supabase.instance.client.from('user').insert(userData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Compte employé créé avec succès')),
@@ -150,7 +154,6 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         _selectedPoste = null;
         _passwordController.clear();
       });
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors de la création: ${e.toString()}')),
@@ -189,7 +192,20 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       final month = int.parse(parts[1]);
       final year = int.parse(parts[2]);
 
-      final daysInMonth = [31, _isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      final daysInMonth = [
+        31,
+        _isLeapYear(year) ? 29 : 28,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+      ];
       if (day < 1 || day > daysInMonth[month - 1]) {
         return 'Date invalide';
       }
@@ -200,7 +216,6 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       if (birthDate.isAfter(today)) {
         return 'La date ne peut pas être dans le futur';
       }
-
     } catch (e) {
       return 'Date invalide';
     }
@@ -218,8 +233,10 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('Créer un compte employé',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Créer un compte employé',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 20),
@@ -233,14 +250,16 @@ class _CreateEmployeeState extends State<CreateEmployee> {
                 controller: _firstNameController,
                 label: 'Nom*',
                 icon: Icons.person,
-                validator: (v) => v!.isEmpty ? 'Ce champ est obligatoire' : null,
+                validator:
+                    (v) => v!.isEmpty ? 'Ce champ est obligatoire' : null,
               ),
               SizedBox(height: 16),
               _buildTextFormField(
                 controller: _lastNameController,
                 label: 'Prénom*',
                 icon: Icons.person,
-                validator: (v) => v!.isEmpty ? 'Ce champ est obligatoire' : null,
+                validator:
+                    (v) => v!.isEmpty ? 'Ce champ est obligatoire' : null,
               ),
               SizedBox(height: 16),
               _buildTextFormField(
@@ -255,7 +274,8 @@ class _CreateEmployeeState extends State<CreateEmployee> {
                 controller: _addressController,
                 label: 'Adresse*',
                 icon: Icons.location_on,
-                validator: (v) => v!.isEmpty ? 'Ce champ est obligatoire' : null,
+                validator:
+                    (v) => v!.isEmpty ? 'Ce champ est obligatoire' : null,
               ),
               SizedBox(height: 16),
               _buildTextFormField(
@@ -272,7 +292,8 @@ class _CreateEmployeeState extends State<CreateEmployee> {
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) {
                   if (v!.isEmpty) return 'Ce champ est obligatoire';
-                  if (!v.contains('@') || !v.contains('.')) return 'Email invalide';
+                  if (!v.contains('@') || !v.contains('.'))
+                    return 'Email invalide';
                   return null;
                 },
               ),
@@ -281,8 +302,10 @@ class _CreateEmployeeState extends State<CreateEmployee> {
               SizedBox(height: 16),
               _buildPosteDropdown(),
               SizedBox(height: 20),
-              Text('Identifiants de connexion',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                'Identifiants de connexion',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               SizedBox(height: 20),
               _buildPasswordField(),
               SizedBox(height: 30),
@@ -302,24 +325,27 @@ class _CreateEmployeeState extends State<CreateEmployee> {
     required String? Function(String?) validator,
   }) {
     return TextFormField(
-        controller: controller,
-        cursorColor: Colors.black,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-            labelText: label,
-            labelStyle: TextStyle(color: Colors.black),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Color(0xFF2B9BD7))),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Color(0xFF2B9BD7))),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide:  BorderSide(color: Color(0xFF2B9BD7))),
-    prefixIcon: Icon(icon, color: Colors.blue),
-    ),
-    validator: validator,
+      controller: controller,
+      cursorColor: Colors.black,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.black),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+        ),
+        prefixIcon: Icon(icon, color: Colors.blue),
+      ),
+      validator: validator,
     );
   }
 
@@ -329,12 +355,13 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       value: _selectedDepartement,
       decoration: _buildInputDecoration('Département*', Icons.business),
       hint: Text('Sélectionnez un département'),
-      items: _departements.map<DropdownMenuItem<String>>((dept) {
-        return DropdownMenuItem<String>(
-          value: dept['nom_departement'].toString(),
-          child: Text(dept['nom_departement'].toString()),
-        );
-      }).toList(),
+      items:
+          _departements.map<DropdownMenuItem<String>>((dept) {
+            return DropdownMenuItem<String>(
+              value: dept['nom_departement'].toString(),
+              child: Text(dept['nom_departement'].toString()),
+            );
+          }).toList(),
       onChanged: (String? newValue) {
         setState(() {
           _selectedDepartement = newValue;
@@ -352,12 +379,13 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       value: _selectedPoste,
       decoration: _buildInputDecoration('Poste*', Icons.work),
       hint: Text('Sélectionnez un poste'),
-      items: getFilteredPostes().map<DropdownMenuItem<String>>((poste) {
-        return DropdownMenuItem<String>(
-          value: poste['nom_poste'].toString(),
-          child: Text(poste['nom_poste'].toString()),
-        );
-      }).toList(),
+      items:
+          getFilteredPostes().map<DropdownMenuItem<String>>((poste) {
+            return DropdownMenuItem<String>(
+              value: poste['nom_poste'].toString(),
+              child: Text(poste['nom_poste'].toString()),
+            );
+          }).toList(),
       onChanged: (String? newValue) {
         setState(() {
           _selectedPoste = newValue;
@@ -373,14 +401,17 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       labelText: label,
       labelStyle: TextStyle(color: Colors.black),
       border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFF2B9BD7))),
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+      ),
       enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFF2B9BD7))),
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+      ),
       focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Color(0xFF2B9BD7))),
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+      ),
       prefixIcon: Icon(icon, color: Colors.blue),
     );
   }
@@ -394,29 +425,36 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         labelText: 'Mot de passe*',
         labelStyle: TextStyle(color: Colors.black),
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(0xFF2B9BD7))),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+        ),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(0xFF2B9BD7))),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+        ),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(0xFF2B9BD7))),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Color(0xFF2B9BD7)),
+        ),
         prefixIcon: Icon(Icons.lock, color: Colors.blue),
         suffixIcon: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (_passwordController.text.isNotEmpty)
               Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: Icon(Icons.check_circle, color: Colors.green)),
+                padding: EdgeInsets.only(right: 8),
+                child: Icon(Icons.check_circle, color: Colors.green),
+              ),
             IconButton(
               icon: Icon(Icons.copy, color: Colors.blue),
               onPressed: () {
                 if (_passwordController.text.isNotEmpty) {
-                  Clipboard.setData(ClipboardData(text: _passwordController.text));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Mot de passe copié')));
+                  Clipboard.setData(
+                    ClipboardData(text: _passwordController.text),
+                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Mot de passe copié')));
                 }
               },
             ),
@@ -443,15 +481,19 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 20),
-          child: Text('CRÉER LE COMPTE',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black)),
+          child: Text(
+            'CRÉER LE COMPTE',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
         ),
       ),
     );

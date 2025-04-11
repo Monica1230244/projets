@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:projets/connect_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
+  await Supabase.initialize(
+    url: 'https://tryfckvixbjkpjhhyewi.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI'
+        '6InRyeWZja3ZpeGJqa3BqaGh5ZXdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwMTkyMDksImV4'
+        'cCI6MjA1OTU5NTIwOX0.bUAUjXqg_O3MUTL0pV4GSDz6BNpk6A5EIfMWb72F2II',
+  );
 
+  await Hive.initFlutter();
+  await Hive.openBox('authBox');
 
-  Future<void> main() async {
-    await Supabase.initialize(
-      url: 'https://tryfckvixbjkpjhhyewi.supabase.co',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeWZja3ZpeGJqa3BqaGh5ZXdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwMTkyMDksImV4cCI6MjA1OTU5NTIwOX0.bUAUjXqg_O3MUTL0pV4GSDz6BNpk6A5EIfMWb72F2II',
-    );
-
-    runApp(const MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

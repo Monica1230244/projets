@@ -1,12 +1,96 @@
+
+import 'package:crypt/crypt.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
 import 'package:projets/accueil_page.dart';
 import 'package:projets/constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ConnectPage extends StatefulWidget {
   @override
-  State<ConnectPage> createState() => _ConnectPageState();
+  State<ConnectPage> createState() => ConnectPageState();
 }
-class _ConnectPageState extends State<ConnectPage> {
+
+class ConnectPageState extends State<ConnectPage> {
+  TextEditingController emailController = TextEditingController();
+  TextEditingController mdpController = TextEditingController();
+
+
+  @override
+  void initState() {
+    super.initState();
+
+  }
+
+
+
+  String hashPassword(String password) {
+    return Crypt.sha512(password, rounds: 10000, salt: "abcdefghijklmnop").toString();
+  }
+
+  Future<void> login() async {
+
+
+    try {
+
+      String email = emailController.text.trim();
+      String mdp = mdpController.text.trim();
+
+      if (email.isEmpty || mdp.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Veuillez remplir tous les champs'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+        return;
+      }
+
+      String hashedPassword = hashPassword(mdp);
+
+      final supabaseResponse = await Supabase.instance.client
+          .from('user')
+          .select()
+          .eq('email', email)
+          .eq('motpasse', hashedPassword)
+          .maybeSingle();
+Logger().i(supabaseResponse);
+
+      if (supabaseResponse != null) {
+
+        /*final authBox = Hive.box('authBox');
+        await authBox.put("email", emailController.text);*/
+
+
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => Accueil()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Email ou mot de passe incorrect.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      Logger().e(e) ;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur : $e'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+    }
+  }
+
+
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,12 +135,12 @@ class _ConnectPageState extends State<ConnectPage> {
                   SizedBox(height: 10),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildTextField('Email', Icons.email),
+                    child: _buildTextField('Email', Icons.email, emailController),
                   ),
                   SizedBox(height: 20),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildTextField('Mot de passe', Icons.lock, isPassword: true),
+                    child: _buildTextField('Mot de passe', Icons.lock, mdpController, isPassword: true),
                   ),
                   SizedBox(height: 20),
                   Row(
@@ -87,11 +171,8 @@ class _ConnectPageState extends State<ConnectPage> {
                   ),
                   SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Accueil()),
-                      );
+                    onPressed: () async {
+                      await login();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
@@ -119,8 +200,11 @@ class _ConnectPageState extends State<ConnectPage> {
       ),
     );
   }
-  Widget _buildTextField(String label, IconData icon, {bool isPassword = false}) {
+
+  Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false}) {
     return TextField(
+      controller: controller,
+      cursorColor: Colors.black,
       obscureText: isPassword,
       decoration: InputDecoration(
         labelText: label,
