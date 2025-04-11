@@ -23,8 +23,6 @@ class ConnectPageState extends State<ConnectPage> {
 
   }
 
-
-
   String hashPassword(String password) {
     return Crypt.sha512(password, rounds: 10000, salt: "abcdefghijklmnop").toString();
   }
@@ -61,7 +59,6 @@ Logger().i(supabaseResponse);
 
         /*final authBox = Hive.box('authBox');
         await authBox.put("email", emailController.text);*/
-
 
 
         Navigator.push(
