@@ -23,6 +23,8 @@ class ConnectPageState extends State<ConnectPage> {
 
   }
 
+
+
   String hashPassword(String password) {
     return Crypt.sha512(password, rounds: 10000, salt: "abcdefghijklmnop").toString();
   }
@@ -53,12 +55,17 @@ class ConnectPageState extends State<ConnectPage> {
           .eq('email', email)
           .eq('motpasse', hashedPassword)
           .maybeSingle();
-Logger().i(supabaseResponse);
+      Logger().i("Réponse Supabase: $supabaseResponse");
 
       if (supabaseResponse != null) {
+        final authBox = Hive.box('authBox');
+        await authBox.put("stocker", {
+          'email': emailController.text,
+          'user_info': supabaseResponse,
 
-        /*final authBox = Hive.box('authBox');
-        await authBox.put("email", emailController.text);*/
+        });
+
+        Logger().d("Données stockées: ${authBox.get('stocker')}");
 
 
         Navigator.push(

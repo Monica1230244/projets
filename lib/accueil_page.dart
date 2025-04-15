@@ -73,7 +73,9 @@ void marquerArrivee(BuildContext context) {
 
   if (now.isBefore(limite)) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Présence marquée avec succès à $heureArrivee")),
+      SnackBar(content: Text("Présence marquée avec succès à $heureArrivee"),
+        backgroundColor: Colors.green,
+      ),
     );
   } else {
     showDialog(
@@ -91,7 +93,7 @@ void marquerArrivee(BuildContext context) {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text("Annuler"),
+              child: Text("Annuler",style: TextStyle(color: Colors.blue),),
             ),
             TextButton(
               onPressed: () {
@@ -105,7 +107,7 @@ void marquerArrivee(BuildContext context) {
                   );
                 }
               },
-              child: Text("Envoyer"),
+              child: Text("Envoyer",style: TextStyle(color: Colors.blue),),
             ),
           ],
         );
@@ -121,7 +123,9 @@ void marquerDepart(BuildContext context) {
 
   if (now.isBefore(limite)) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Départ marqué avec succès à $heureDepart")),
+      SnackBar(content: Text("Départ marqué avec succès à $heureDepart"),
+        backgroundColor: Colors.green,
+      ),
     );
   } else {
     showDialog(
@@ -139,7 +143,7 @@ void marquerDepart(BuildContext context) {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text("Annuler"),
+              child: Text("Annuler",style: TextStyle(color: Colors.blue),),
             ),
             TextButton(
               onPressed: () {
@@ -153,7 +157,7 @@ void marquerDepart(BuildContext context) {
                   );
                 }
               },
-              child: Text("Envoyer"),
+              child: Text("Envoyer",style: TextStyle(color: Colors.blue),),
             ),
           ],
         );
