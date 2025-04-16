@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:logger/logger.dart';
 import 'package:projets/user.dart';
+import 'package:projets/utils/constants.dart';
 import 'admin_page.dart';
 import 'package:intl/intl.dart';
 import 'connect_admin.dart';
 import 'menu_bouton.dart';
-
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Accueil extends StatelessWidget {
   @override
@@ -22,12 +26,18 @@ class Accueil extends StatelessWidget {
           MenuButton(
             icon: Icons.login,
             text: "Marquer arrivée",
-            onTap: () => marquerArrivee(context),
+            onTap:
+                () =>
+                    _verifierPositionEtMarquerDepart(context, estArrivee: true),
           ),
           MenuButton(
             icon: Icons.logout,
             text: "Marquer départ",
-            onTap: () => marquerDepart(context),
+            onTap:
+                () => _verifierPositionEtMarquerDepart(
+                  context,
+                  estArrivee: false,
+                ),
           ),
           MenuButton(
             icon: Icons.dashboard,
@@ -49,7 +59,6 @@ class Accueil extends StatelessWidget {
               );
             },
           ),
-
           MenuButton(
             icon: Icons.person,
             text: "Créer compte utilisateur",
@@ -64,105 +73,174 @@ class Accueil extends StatelessWidget {
       ),
     );
   }
-}
 
-void marquerArrivee(BuildContext context) {
-  DateTime now = DateTime.now();
-  DateTime limite = DateTime(now.year, now.month, now.day, 8, 30);
-  String heureArrivee = DateFormat('HH:mm').format(now);
-
-  if (now.isBefore(limite)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Présence marquée avec succès à $heureArrivee"),
-        backgroundColor: Colors.green,
-      ),
-    );
-  } else {
-    showDialog(
-      context: context,
-      builder: (context) {
-        TextEditingController motifController = TextEditingController();
-        return AlertDialog(
-          title: Text("Motif de retard"),
-          content: TextField(
-            controller: motifController,
-            decoration: InputDecoration(hintText: "Entrez votre motif"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text("Annuler",style: TextStyle(color: Colors.blue),),
-            ),
-            TextButton(
-              onPressed: () {
-                String motif = motifController.text.trim();
-                if (motif.isNotEmpty) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Motif envoyé à l'administrateur : $motif"),
-                    ),
-                  );
-                }
-              },
-              child: Text("Envoyer",style: TextStyle(color: Colors.blue),),
-            ),
-          ],
+  Future<void> _verifierPositionEtMarquerDepart(
+    BuildContext context, {
+    required bool estArrivee,
+  }) async {
+    try {
+      final status = await Permission.location.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Permission de localisation refusée")),
         );
-      },
-    );
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      double distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        entrepriseLat,
+        entrepriseLon,
+      );
+
+      if (distance <= distanceSeuil) {
+        if (estArrivee) {
+          marquerArrivee(context);
+        } else {
+          marquerDepart(context);
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Vous êtes à ${(distance).toStringAsFixed(0)} mètres de l'entreprise. Veuillez vous rendre dans l'entreprise.",
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur de géolocalisation: ${e.toString()}")),
+      );
+    }
+  }
+
+  void marquerArrivee(BuildContext context) {
+    DateTime now = DateTime.now();
+    DateTime limite = DateTime(now.year, now.month, now.day, 8, 30);
+    String heureArrivee = DateFormat('HH:mm').format(now);
+
+    final authBox = Hive.box('authBox');
+       // await authBox.get('stocker_user',);
+
+        if (now.isBefore(limite)) {
+          /* final Map<String,dynamic> pointage = {
+        'idemploye':
+        'date_heure': now.toIso8601String(),
+        'type': "Arrivee",
+      };
+      Logger().i(pointage);
+*/
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Présence marquée avec succès à $heureArrivee"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          TextEditingController motifController = TextEditingController();
+          return AlertDialog(
+            title: Text("Motif de retard"),
+            content: TextField(
+              controller: motifController,
+              decoration: InputDecoration(hintText: "Entrez votre motif"),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Annuler", style: TextStyle(color: Colors.blue)),
+              ),
+              TextButton(
+                onPressed: () {
+                  String motif = motifController.text.trim();
+                  if (motif.isNotEmpty) {
+                    Navigator.pop(context);
+
+                    final pointage = {
+                      'date_heure': now.toIso8601String(),
+                      'type': "Arrivee",
+                      'motif':motifController.text,
+                    };
+                    Logger().i(pointage);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Présence marquée avec succès à $heureArrivee",
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: Text("Envoyer", style: TextStyle(color: Colors.blue)),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  void marquerDepart(BuildContext context) {
+    DateTime now = DateTime.now();
+    DateTime limite = DateTime(now.year, now.month, now.day, 18, 30);
+    String heureDepart = DateFormat('HH:mm').format(now);
+
+    if (now.isBefore(limite)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Départ marqué avec succès à $heureDepart"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) {
+          TextEditingController motifController = TextEditingController();
+          return AlertDialog(
+            title: Text("Motif d'heure supplémentaire"),
+            content: TextField(
+              controller: motifController,
+              decoration: InputDecoration(hintText: "Entrez votre motif"),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Annuler", style: TextStyle(color: Colors.blue)),
+              ),
+              TextButton(
+                onPressed: () {
+                  String motif = motifController.text.trim();
+                  if (motif.isNotEmpty) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Motif envoyé à l'administrateur : $motif",
+                        ),
+                      ),
+                    );
+                    // Ici vous devriez ajouter l'appel à votre base de données
+                    // pour enregistrer le départ avec le motif
+                  }
+                },
+                child: Text("Envoyer", style: TextStyle(color: Colors.blue)),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }
-
-void marquerDepart(BuildContext context) {
-  DateTime now = DateTime.now();
-  DateTime limite = DateTime(now.year, now.month, now.day, 18, 30);
-  String heureDepart = DateFormat('HH:mm').format(now);
-
-  if (now.isBefore(limite)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Départ marqué avec succès à $heureDepart"),
-        backgroundColor: Colors.green,
-      ),
-    );
-  } else {
-    showDialog(
-      context: context,
-      builder: (context) {
-        TextEditingController motifController = TextEditingController();
-        return AlertDialog(
-          title: Text("Motif d'heure supplémentaire"),
-          content: TextField(
-            controller: motifController,
-            decoration: InputDecoration(hintText: "Entrez votre motif"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text("Annuler",style: TextStyle(color: Colors.blue),),
-            ),
-            TextButton(
-              onPressed: () {
-                String motif = motifController.text.trim();
-                if (motif.isNotEmpty) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Motif envoyé à l'administrateur : $motif"),
-                    ),
-                  );
-                }
-              },
-              child: Text("Envoyer",style: TextStyle(color: Colors.blue),),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
