@@ -22,7 +22,7 @@ class ConnectPageState extends State<ConnectPage> {
     super.initState();
     _loadRememberedUser();
   }
-
+// active si l'utilisateur coche
   Future<void> _loadRememberedUser() async {
     final authBox = Hive.box('authBox');
     if (authBox.containsKey('userData')) {
@@ -33,7 +33,7 @@ class ConnectPageState extends State<ConnectPage> {
       });
     }
   }
-
+// mot de passe crypté
   String hashPassword(String password) {
     return Crypt.sha512(
       password,
@@ -44,9 +44,10 @@ class ConnectPageState extends State<ConnectPage> {
 
   Future<void> login() async {
     try {
+      //deux variables déclarées
       String email = emailController.text.trim();
       String mdp = mdpController.text.trim();
-
+//verfier si tous les chmaps sont remplis
       if (email.isEmpty || mdp.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -56,9 +57,9 @@ class ConnectPageState extends State<ConnectPage> {
         );
         return;
       }
-
+// declaré une variable pour recuperer le mdp crypté
       String hashedPassword = hashPassword(mdp);
-
+// requete pour verifier si un utilisateur a le meme email et mdp crypte qui est renseigné
       final supabaseResponse =
           await Supabase.instance.client
               .from('user')
@@ -70,17 +71,21 @@ class ConnectPageState extends State<ConnectPage> {
 
       if (supabaseResponse != null) {
         if (_rememberMe) {
+          //appel de la boite
           final authBox = Hive.box('authBox');
+          //declarer une variable a qui on a affecte l'objet qui prend en parametre la variable retournée
           Users user = Users.fromSupabase(supabaseResponse);
+          //stocker les informations dans une clé principale
           await authBox.put('stocker_user', user);
-
+//recuperer et afficher les données stockées
           Logger().d("Données stockées: ${authBox.get('stocker_user')}");
         }
-
+//navige vers la page accueil
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => Accueil()),
         );
+        //en cas d'erreur affiche ce message
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -96,7 +101,7 @@ class ConnectPageState extends State<ConnectPage> {
       );
     }
   }
-
+//methode pour reinitialiser un mdp oublié
   void _handleForgotPassword() {
     showDialog(
       context: context,
@@ -166,7 +171,7 @@ class ConnectPageState extends State<ConnectPage> {
           ),
     );
   }
-
+//formulaire pour renseigner les informations
   @override
   Widget build(BuildContext context) {
     return Scaffold(
