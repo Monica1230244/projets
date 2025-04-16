@@ -197,12 +197,24 @@ class Accueil extends StatelessWidget {
     }
   }
 
-  void marquerDepart(BuildContext context) {
+  Future<void> marquerDepart(BuildContext context) async {
     DateTime now = DateTime.now();
     DateTime limite = DateTime(now.year, now.month, now.day, 18, 30);
     String heureDepart = DateFormat('HH:mm').format(now);
 
+    final authBox = Hive.box('authBox');
+    Users user =  authBox.get('stocker_user');
+    user.id;
     if (now.isBefore(limite)) {
+      final Map<String,dynamic> pointage = {
+        'idemploye':user.id,
+        'date_heure': now.toIso8601String(),
+        'type': "Arrivee",
+        'statut':'En attente',
+      };
+      Logger().i(pointage);
+
+      await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Départ marqué avec succès à $heureDepart"),
@@ -213,11 +225,11 @@ class Accueil extends StatelessWidget {
       showDialog(
         context: context,
         builder: (context) {
-          TextEditingController motifController = TextEditingController();
+          TextEditingController raisonController = TextEditingController();
           return AlertDialog(
             title: Text("Motif d'heure supplémentaire"),
             content: TextField(
-              controller: motifController,
+              controller: raisonController,
               decoration: InputDecoration(hintText: "Entrez votre motif"),
             ),
             actions: [
@@ -226,14 +238,23 @@ class Accueil extends StatelessWidget {
                 child: Text("Annuler", style: TextStyle(color: Colors.blue)),
               ),
               TextButton(
-                onPressed: () {
-                  String motif = motifController.text.trim();
+                onPressed: () async {
+                  String motif = raisonController.text.trim();
                   if (motif.isNotEmpty) {
                     Navigator.pop(context);
+                    final pointage = {
+                      'idemploye':user.id,
+                      'date_heure': now.toIso8601String(),
+                      'type': "Départ",
+                      'statut':'En attente',
+                      'raison':raisonController.text,
+                    };
+                    Logger().i(pointage);
+                    await Supabase.instance.client.from('pointage').insert(pointage);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          "Motif envoyé à l'administrateur : $motif",
+                          "Départ marqué avec succès : $motif",
                         ),
                       ),
                     );
