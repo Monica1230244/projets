@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:projets/connect_page.dart';
+import 'package:projets/utilisateur.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'connect_admin.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
 
   await Hive.initFlutter();
   await Hive.openBox('authBox');
+  Hive.registerAdapter(UsersAdapter());
 
   runApp(const MyApp());
 }

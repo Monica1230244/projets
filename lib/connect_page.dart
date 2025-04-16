@@ -1,10 +1,10 @@
-
 import 'package:crypt/crypt.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:projets/accueil_page.dart';
 import 'package:projets/constants.dart';
+import 'package:projets/utilisateur.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ConnectPage extends StatefulWidget {
@@ -15,25 +15,35 @@ class ConnectPage extends StatefulWidget {
 class ConnectPageState extends State<ConnectPage> {
   TextEditingController emailController = TextEditingController();
   TextEditingController mdpController = TextEditingController();
-
+  bool _rememberMe = false;
 
   @override
   void initState() {
     super.initState();
-
+    _loadRememberedUser();
   }
 
-
+  Future<void> _loadRememberedUser() async {
+    final authBox = Hive.box('authBox');
+    if (authBox.containsKey('userData')) {
+      final userData = authBox.get('userData');
+      setState(() {
+        _rememberMe = true;
+        emailController.text = userData['email'];
+      });
+    }
+  }
 
   String hashPassword(String password) {
-    return Crypt.sha512(password, rounds: 10000, salt: "abcdefghijklmnop").toString();
+    return Crypt.sha512(
+      password,
+      rounds: 10000,
+      salt: "abcdefghijklmnop",
+    ).toString();
   }
 
   Future<void> login() async {
-
-
     try {
-
       String email = emailController.text.trim();
       String mdp = mdpController.text.trim();
 
@@ -49,24 +59,23 @@ class ConnectPageState extends State<ConnectPage> {
 
       String hashedPassword = hashPassword(mdp);
 
-      final supabaseResponse = await Supabase.instance.client
-          .from('user')
-          .select()
-          .eq('email', email)
-          .eq('motpasse', hashedPassword)
-          .maybeSingle();
+      final supabaseResponse =
+          await Supabase.instance.client
+              .from('user')
+              .select()
+              .eq('email', email)
+              .eq('motpasse', hashedPassword)
+              .maybeSingle();
       Logger().i("Réponse Supabase: $supabaseResponse");
 
       if (supabaseResponse != null) {
-        final authBox = Hive.box('authBox');
-        await authBox.put("stocker", {
-          'email': emailController.text,
-          'user_info': supabaseResponse,
+        if (_rememberMe) {
+          final authBox = Hive.box('authBox');
+          Users user = Users.fromSupabase(supabaseResponse);
+          await authBox.put('stocker_user', user);
 
-        });
-
-        Logger().d("Données stockées: ${authBox.get('stocker')}");
-
+          Logger().d("Données stockées: ${authBox.get('stocker_user')}");
+        }
 
         Navigator.push(
           context,
@@ -81,19 +90,82 @@ class ConnectPageState extends State<ConnectPage> {
         );
       }
     } catch (e) {
-      Logger().e(e) ;
+      Logger().e(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur : $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
       );
     }
   }
 
+  void _handleForgotPassword() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Réinitialisation du mot de passe'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Entrez votre email pour recevoir un lien de réinitialisation :',
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  controller: TextEditingController(text: emailController.text),
+                  decoration: InputDecoration(
+                    hintText: 'Votre email',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final email = emailController.text.trim();
+                  if (email.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Veuillez entrer un email valide'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
 
-
-
+                  try {
+                    await Supabase.instance.client.auth.resetPasswordForEmail(
+                      email,
+                    );
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Un email de réinitialisation a été envoyé à $email',
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erreur lors de l\'envoi: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                child: Text('Envoyer'),
+              ),
+            ],
+          ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,10 +175,7 @@ class ConnectPageState extends State<ConnectPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.white,
-              primaryColor,
-            ],
+            colors: [Colors.white, primaryColor],
           ),
         ),
         child: Center(
@@ -139,12 +208,21 @@ class ConnectPageState extends State<ConnectPage> {
                   SizedBox(height: 10),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildTextField('Email', Icons.email, emailController),
+                    child: _buildTextField(
+                      'Email',
+                      Icons.email,
+                      emailController,
+                    ),
                   ),
                   SizedBox(height: 20),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildTextField('Mot de passe', Icons.lock, mdpController, isPassword: true),
+                    child: _buildTextField(
+                      'Mot de passe',
+                      Icons.lock,
+                      mdpController,
+                      isPassword: true,
+                    ),
                   ),
                   SizedBox(height: 20),
                   Row(
@@ -153,19 +231,23 @@ class ConnectPageState extends State<ConnectPage> {
                       Row(
                         children: [
                           Checkbox(
-                            value: true,
-                            onChanged: (value) {},
-                            fillColor: WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                return primaryColor;
-                              },
-                            ),
+                            value: _rememberMe,
+                            onChanged: (value) {
+                              setState(() {
+                                _rememberMe = value ?? false;
+                              });
+                            },
+                            fillColor: WidgetStateProperty.resolveWith<Color>((
+                              Set<WidgetState> states,
+                            ) {
+                              return primaryColor;
+                            }),
                           ),
-                          Text('Se rappeler de moi'),
+                          Text('Se souvenir de moi'),
                         ],
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: _handleForgotPassword,
                         child: Text(
                           'Mot de passe oublié ?',
                           style: TextStyle(color: Colors.black),
@@ -180,7 +262,10 @@ class ConnectPageState extends State<ConnectPage> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
-                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 16,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -195,7 +280,7 @@ class ConnectPageState extends State<ConnectPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 30)
+                  SizedBox(height: 30),
                 ],
               ),
             ),
@@ -205,7 +290,12 @@ class ConnectPageState extends State<ConnectPage> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false}) {
+  Widget _buildTextField(
+    String label,
+    IconData icon,
+    TextEditingController controller, {
+    bool isPassword = false,
+  }) {
     return TextField(
       controller: controller,
       cursorColor: Colors.black,

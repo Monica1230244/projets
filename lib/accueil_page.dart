@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
-import 'package:projets/user.dart';
+import 'package:projets/presence_page.dart';
+import 'package:projets/utilisateur.dart';
 import 'package:projets/utils/constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin_page.dart';
 import 'package:intl/intl.dart';
 import 'connect_admin.dart';
@@ -45,7 +47,7 @@ class Accueil extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Presence()),
+                MaterialPageRoute(builder: (context) => PresencePage()),
               );
             },
           ),
@@ -114,29 +116,32 @@ class Accueil extends StatelessWidget {
         );
       }
     } catch (e) {
+      Logger().e(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Erreur de géolocalisation: ${e.toString()}")),
       );
     }
   }
 
-  void marquerArrivee(BuildContext context) {
+  Future<void> marquerArrivee(BuildContext context) async {
     DateTime now = DateTime.now();
     DateTime limite = DateTime(now.year, now.month, now.day, 8, 30);
     String heureArrivee = DateFormat('HH:mm').format(now);
 
-    final authBox = Hive.box('authBox');
-       // await authBox.get('stocker_user',);
 
-        if (now.isBefore(limite)) {
-          /* final Map<String,dynamic> pointage = {
-        'idemploye':
+    final authBox = Hive.box('authBox');
+    Users user =  authBox.get('stocker_user');
+    user.id;
+    if (now.isBefore(limite)) {
+           final Map<String,dynamic> pointage = {
+        'idemploye':user.id,
         'date_heure': now.toIso8601String(),
         'type': "Arrivee",
+             'statut':'En attente',
       };
       Logger().i(pointage);
-*/
 
+           await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Présence marquée avec succès à $heureArrivee"),
@@ -144,9 +149,7 @@ class Accueil extends StatelessWidget {
         ),
       );
     } else {
-
-
-      showDialog(
+          showDialog(
         context: context,
         builder: (context) {
           TextEditingController motifController = TextEditingController();
@@ -162,17 +165,20 @@ class Accueil extends StatelessWidget {
                 child: Text("Annuler", style: TextStyle(color: Colors.blue)),
               ),
               TextButton(
-                onPressed: () {
+                onPressed: () async {
                   String motif = motifController.text.trim();
                   if (motif.isNotEmpty) {
                     Navigator.pop(context);
 
                     final pointage = {
+                      'idemploye':user.id,
                       'date_heure': now.toIso8601String(),
                       'type': "Arrivee",
+                      'statut':'En attente',
                       'motif':motifController.text,
                     };
                     Logger().i(pointage);
+                    await Supabase.instance.client.from('pointage').insert(pointage);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -231,8 +237,7 @@ class Accueil extends StatelessWidget {
                         ),
                       ),
                     );
-                    // Ici vous devriez ajouter l'appel à votre base de données
-                    // pour enregistrer le départ avec le motif
+
                   }
                 },
                 child: Text("Envoyer", style: TextStyle(color: Colors.blue)),
