@@ -239,7 +239,11 @@ class ConnectPageState extends State<ConnectPage> {
                   ),
                   SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: _isLoading ? null : login,
+                    onPressed: () async{
+                      if(!_isLoading){
+                        await login();
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
