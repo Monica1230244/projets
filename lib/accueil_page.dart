@@ -209,7 +209,7 @@ class Accueil extends StatelessWidget {
       final Map<String,dynamic> pointage = {
         'idemploye':user.id,
         'date_heure': now.toIso8601String(),
-        'type': "Arrivee",
+        'type': "Depart",
         'statut':'En attente',
       };
       Logger().i(pointage);
