@@ -15,23 +15,11 @@ class ConnectPage extends StatefulWidget {
 class ConnectPageState extends State<ConnectPage> {
   TextEditingController emailController = TextEditingController();
   TextEditingController mdpController = TextEditingController();
-  bool _rememberMe = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadRememberedUser();
-  }
-// active si l'utilisateur coche
-  Future<void> _loadRememberedUser() async {
-    final authBox = Hive.box('authBox');
-    if (authBox.containsKey('userData')) {
-      final userData = authBox.get('userData');
-      setState(() {
-        _rememberMe = true;
-        emailController.text = userData['email'];
-      });
-    }
   }
 // mot de passe crypté
   String hashPassword(String password) {
@@ -43,6 +31,10 @@ class ConnectPageState extends State<ConnectPage> {
   }
 
   Future<void> login() async {
+    setState(() {
+      _isLoading = true; // Active le loading
+    });
+
     try {
       //deux variables déclarées
       String email = emailController.text.trim();
@@ -57,9 +49,9 @@ class ConnectPageState extends State<ConnectPage> {
         );
         return;
       }
-// declaré une variable pour recuperer le mdp crypté
+      // declaré une variable pour recuperer le mdp crypté
       String hashedPassword = hashPassword(mdp);
-// requete pour verifier si un utilisateur a le meme email et mdp crypte qui est renseigné
+      // requete pour verifier si un utilisateur a le meme email et mdp crypte qui est renseigné
       final supabaseResponse =
           await Supabase.instance.client
               .from('user')
@@ -70,17 +62,16 @@ class ConnectPageState extends State<ConnectPage> {
       Logger().i("Réponse Supabase: $supabaseResponse");
 
       if (supabaseResponse != null) {
-        if (_rememberMe) {
           //appel de la boite
           final authBox = Hive.box('authBox');
           //declarer une variable a qui on a affecte l'objet qui prend en parametre la variable retournée
           Users user = Users.fromSupabase(supabaseResponse);
           //stocker les informations dans une clé principale
           await authBox.put('stocker_user', user);
-//recuperer et afficher les données stockées
+          //recuperer et afficher les données stockées
           Logger().d("Données stockées: ${authBox.get('stocker_user')}");
-        }
-//navige vers la page accueil
+
+       //navige vers la page accueil
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => Accueil()),
@@ -99,6 +90,10 @@ class ConnectPageState extends State<ConnectPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
       );
+    }finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 //methode pour reinitialiser un mdp oublié
@@ -233,24 +228,6 @@ class ConnectPageState extends State<ConnectPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _rememberMe,
-                            onChanged: (value) {
-                              setState(() {
-                                _rememberMe = value ?? false;
-                              });
-                            },
-                            fillColor: WidgetStateProperty.resolveWith<Color>((
-                              Set<WidgetState> states,
-                            ) {
-                              return primaryColor;
-                            }),
-                          ),
-                          Text('Se souvenir de moi'),
-                        ],
-                      ),
                       TextButton(
                         onPressed: _handleForgotPassword,
                         child: Text(
@@ -262,21 +239,25 @@ class ConnectPageState extends State<ConnectPage> {
                   ),
                   SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () async {
-                      await login();
-                    },
+                    onPressed: _isLoading ? null : login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 16,
-                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
                       elevation: 5,
                     ),
-                    child: Text(
+                    child: _isLoading
+                        ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                        : Text(
                       'Se connecter',
                       style: TextStyle(
                         fontSize: 18,
