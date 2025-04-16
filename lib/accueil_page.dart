@@ -8,9 +8,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin_page.dart';
 import 'package:intl/intl.dart';
 import 'connect_admin.dart';
+import 'constants.dart';
 import 'menu_bouton.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'user.dart';
 
 class Accueil extends StatelessWidget {
   @override
@@ -47,7 +49,7 @@ class Accueil extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => PresencePage()),
+                MaterialPageRoute(builder: (context) => PresenceUser()),
               );
             },
           ),
@@ -209,7 +211,7 @@ class Accueil extends StatelessWidget {
       final Map<String,dynamic> pointage = {
         'idemploye':user.id,
         'date_heure': now.toIso8601String(),
-        'type': "Depart",
+        'type': "Départ",
         'statut':'En attente',
       };
       Logger().i(pointage);

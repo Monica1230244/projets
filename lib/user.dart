@@ -6,12 +6,13 @@ import 'package:projets/heure_supp.dart';
 import 'package:projets/presence_page.dart';
 import 'package:projets/retard_page.dart';
 import 'constants.dart';
-class Presence extends StatefulWidget {
-  const Presence({Key? key}) : super(key: key);
+
+class PresenceUser extends StatefulWidget {
+  const PresenceUser({Key? key}) : super(key: key);
   @override
-  _PresenceState createState() => _PresenceState();
+  _PresenceUserState createState() => _PresenceUserState();
 }
-class _PresenceState extends State<Presence> {
+class _PresenceUserState extends State<PresenceUser> {
   late DateTime _selectedDate;
   late DateTime _selectedEndDate;
   int presenceCount = 12;
