@@ -19,7 +19,8 @@ class Accueil extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
+      body: SingleChildScrollView(
+        child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircleAvatar(
@@ -74,6 +75,7 @@ class Accueil extends StatelessWidget {
             },
           ),
         ],
+      ),
       ),
     );
   }
