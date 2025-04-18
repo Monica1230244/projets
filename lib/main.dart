@@ -7,6 +7,7 @@ import 'package:projets/connect_page.dart';
 import 'package:projets/utilisateur.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'accueil_page.dart';
 import 'connect_admin.dart';
 
 Future<void> main() async {
@@ -20,8 +21,9 @@ Future<void> main() async {
   );
 
   await Hive.initFlutter();
-  await Hive.openBox('authBox');
   Hive.registerAdapter(UsersAdapter());
+  await Hive.openBox('authBox');
+
 
   runApp(const MyApp());
 }
@@ -40,7 +42,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('fr', 'FR')],
-      home: ConnectPage(),
+      home: Accueil(),
     );
   }
 }

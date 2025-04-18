@@ -14,6 +14,7 @@ class _PresencePageState extends State<PresencePage> {
   int _selectedIndex = 0;
   String _selectedFilter = 'Tous';
   bool _isLoading = true;
+
   List<Map<String, dynamic>> _allPresences = [];
 
   final List<String> _filterOptions = ['Tous', 'Arrivées', 'Départs', 'Retards', 'Heures Supp'];
@@ -30,6 +31,7 @@ class _PresencePageState extends State<PresencePage> {
     try {
       setState(() {
         _isLoading = true;
+
       });
 
       // Récupérer l'utilisateur depuis Hive
@@ -94,7 +96,7 @@ class _PresencePageState extends State<PresencePage> {
       if (dateHeure.isAfter(limiteDepart)) {
         return 'Heures Supp';
       }
-      return 'Départ normal';
+      return 'Départ ';
     }
 
     return 'Inconnu';
@@ -108,7 +110,7 @@ class _PresencePageState extends State<PresencePage> {
         return Colors.orange;
       case 'Heures Supp':
         return Colors.blue;
-      case 'Départ normal':
+      case 'Départ ':
         return Colors.green;
       default:
         return Colors.grey;
@@ -169,7 +171,10 @@ class _PresencePageState extends State<PresencePage> {
               SizedBox(height: 20),
               Expanded(
                 child: _isLoading
-                    ? Center(child: CircularProgressIndicator())
+                    ? Center(child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ))
                     : _buildPresenceList(),
               ),
             ],

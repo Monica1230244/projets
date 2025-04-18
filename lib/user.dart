@@ -86,7 +86,9 @@ class _PresenceUserState extends State<PresenceUser> {
           },
         ),
       ),
-      body: Container(
+      body: SingleChildScrollView(
+        child:
+        Container(
         decoration: BoxDecoration(
         ),
         child: Padding(
@@ -189,6 +191,7 @@ class _PresenceUserState extends State<PresenceUser> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
