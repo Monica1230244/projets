@@ -19,63 +19,70 @@ class Accueil extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 110,
-            backgroundColor: Colors.white,
-            backgroundImage: AssetImage('assets/images/logo1.png'),
-          ),
-          MenuButton(
-            icon: Icons.login,
-            text: "Marquer arrivée",
-            onTap:
-                () =>
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 110,
+              backgroundColor: Colors.white,
+              backgroundImage: AssetImage('assets/images/logo1.png'),
+            ),
+            Container(
+              clipBehavior: Clip.none,
+              child: MenuButton(
+                icon: Icons.login,
+                text: "Marquer arrivée",
+                onTap:
+                    () =>
                     _verifierPositionEtMarquerDepart(context, estArrivee: true),
-          ),
-          MenuButton(
-            icon: Icons.logout,
-            text: "Marquer départ",
-            onTap:
-                () => _verifierPositionEtMarquerDepart(
+              ),
+            ),
+            
+            MenuButton(
+              icon: Icons.logout,
+              text: "Marquer départ",
+              onTap:
+                  () => _verifierPositionEtMarquerDepart(
+                context,
+                estArrivee: false,
+              ),
+            ),
+            MenuButton(
+              icon: Icons.dashboard,
+              text: "Consulter tableau de bord personnel",
+              onTap: () {
+                Navigator.push(
                   context,
-                  estArrivee: false,
-                ),
-          ),
-          MenuButton(
-            icon: Icons.dashboard,
-            text: "Consulter tableau de bord personnel",
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PresenceUser()),
-              );
-            },
-          ),
-          MenuButton(
-            icon: Icons.analytics,
-            text: "Consulter tableau de bord",
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AdminDashboard()),
-              );
-            },
-          ),
-          MenuButton(
-            icon: Icons.person,
-            text: "Créer compte utilisateur",
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CreateEmployee()),
-              );
-            },
-          ),
-        ],
-      ),
+                  MaterialPageRoute(builder: (context) => PresenceUser()),
+                );
+              },
+            ),
+            MenuButton(
+              icon: Icons.analytics,
+              text: "Consulter tableau de bord",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AdminDashboard()),
+                );
+              },
+            ),
+            MenuButton(
+              icon: Icons.person,
+              text: "Créer compte utilisateur",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CreateEmployee()),
+                );
+              },
+            ),
+
+          ],
+        ),
+        ),
       ),
     );
   }
@@ -88,7 +95,11 @@ class Accueil extends StatelessWidget {
       final status = await Permission.location.request();
       if (!status.isGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Permission de localisation refusée")),
+          SnackBar(
+              padding: EdgeInsets.all(30),
+              content: Text("Permission de localisation refusée",style: TextStyle(fontSize: 25),
+              )
+          ),
         );
         return;
       }
@@ -113,8 +124,10 @@ class Accueil extends StatelessWidget {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            padding: EdgeInsets.all(30),
             content: Text(
-              "Vous êtes à ${(distance).toStringAsFixed(0)} mètres de l'entreprise. Veuillez vous rendre dans l'entreprise.",
+              "Vous êtes à ${(distance).toStringAsFixed(0)} mètres de l'entreprise. "
+                  "Veuillez vous rendre dans l'entreprise.",style: TextStyle(fontSize: 20),
             ),
           ),
         );
@@ -122,7 +135,11 @@ class Accueil extends StatelessWidget {
     } catch (e) {
       Logger().e(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur de géolocalisation: ${e.toString()}")),
+        SnackBar(
+            padding: EdgeInsets.all(30),
+            content: Text("Erreur de géolocalisation: ${e.toString()}",style: TextStyle(fontSize: 25),
+            )
+        ),
       );
     }
   }
@@ -148,7 +165,8 @@ class Accueil extends StatelessWidget {
            await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Présence marquée avec succès à $heureArrivee"),
+          padding: EdgeInsets.all(30),
+          content: Text("Présence marquée avec succès à $heureArrivee",style: TextStyle(fontSize: 23),),
           backgroundColor: Colors.green,
         ),
       );
@@ -158,10 +176,21 @@ class Accueil extends StatelessWidget {
         builder: (context) {
           TextEditingController motifController = TextEditingController();
           return AlertDialog(
+            shadowColor: Colors.blue,
             title: Text("Motif de retard"),
             content: TextField(
+              cursorColor: Colors.blue,
               controller: motifController,
-              decoration: InputDecoration(hintText: "Entrez votre motif"),
+              decoration: InputDecoration(hintText: "Entrez votre motif",
+
+          enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.grey),
+              ),
+
+          focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.blue),
+            ),
+              ),
             ),
             actions: [
               TextButton(
@@ -185,8 +214,9 @@ class Accueil extends StatelessWidget {
                     await Supabase.instance.client.from('pointage').insert(pointage);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
+                        padding: EdgeInsets.all(30),
                         content: Text(
-                          "Présence marquée avec succès à $heureArrivee",
+                          "Présence marquée avec succès à $heureArrivee",style: TextStyle(fontSize: 23),
                         ),
                       ),
                     );
@@ -221,7 +251,8 @@ class Accueil extends StatelessWidget {
       await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Départ marqué avec succès à $heureDepart"),
+          padding: EdgeInsets.all(30),
+          content: Text("Départ marqué avec succès à $heureDepart",style: TextStyle(fontSize: 23),),
           backgroundColor: Colors.green,
         ),
       );
@@ -231,10 +262,21 @@ class Accueil extends StatelessWidget {
         builder: (context) {
           TextEditingController raisonController = TextEditingController();
           return AlertDialog(
+            shadowColor: Colors.blue,
             title: Text("Motif d'heure supplémentaire"),
             content: TextField(
+              cursorColor: Colors.blue,
               controller: raisonController,
-              decoration: InputDecoration(hintText: "Entrez votre motif"),
+              decoration: InputDecoration(hintText: "Entrez votre motif",
+
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
             ),
             actions: [
               TextButton(
@@ -257,8 +299,9 @@ class Accueil extends StatelessWidget {
                     await Supabase.instance.client.from('pointage').insert(pointage);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
+                        padding: EdgeInsets.all(30),
                         content: Text(
-                          "Départ marqué avec succès : $motif",
+                          "Départ marqué avec succès : $motif",style: TextStyle(fontSize: 23),
                         ),
                       ),
                     );

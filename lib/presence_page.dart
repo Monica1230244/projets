@@ -17,7 +17,13 @@ class _PresencePageState extends State<PresencePage> {
 
   List<Map<String, dynamic>> _allPresences = [];
 
-  final List<String> _filterOptions = ['Tous', 'Arrivées', 'Départs', 'Retards', 'Heures Supp'];
+  final List<String> _filterOptions = [
+    'Tous',
+    'Arrivées',
+    'Départs',
+    'Retards',
+    'Heures Supp',
+  ];
 
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -31,7 +37,6 @@ class _PresencePageState extends State<PresencePage> {
     try {
       setState(() {
         _isLoading = true;
-
       });
 
       // Récupérer l'utilisateur depuis Hive
@@ -55,20 +60,20 @@ class _PresencePageState extends State<PresencePage> {
         String date = DateFormat('dd MMMM yyyy', 'fr_FR').format(dateHeure);
         String heure = DateFormat('HH:mm').format(dateHeure);
 
-        String status = _determineStatus(record, dateHeure);
-        Color color = _getStatusColor(status);
-        String type = record['type'] ?? 'Inconnu';
+            String status = _determineStatus(record, dateHeure);
+            Color color = _getStatusColor(status);
+            String type = record['type'] ?? 'Inconnu';
 
-        return {
-          'date': date,
-          'heure': heure,
-          'type': type,
-          'status': status,
-          'color': color,
-          'motif': record['motif'] ?? record['raison'] ?? '',
-          'hasProblem': status != 'À l\'heure',
-        };
-      }).toList();
+            return {
+              'date': date,
+              'heure': heure,
+              'type': type,
+              'status': status,
+              'color': color,
+              'motif': record['motif'] ?? record['raison'] ?? '',
+              'hasProblem': status != 'À l\'heure',
+            };
+          }).toList();
 
       setState(() {
         _isLoading = false;
@@ -78,7 +83,12 @@ class _PresencePageState extends State<PresencePage> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la récupération des données: $e')),
+        SnackBar(
+          content: Text(
+            'Erreur lors de la récupération des données: $e',
+            style: TextStyle(fontSize: 25),
+          ),
+        ),
       );
     }
   }
@@ -87,13 +97,25 @@ class _PresencePageState extends State<PresencePage> {
     String type = record['type'] ?? '';
 
     if (type == 'Arrivee') {
-      DateTime limiteArrivee = DateTime(dateHeure.year, dateHeure.month, dateHeure.day, 8, 30);
+      DateTime limiteArrivee = DateTime(
+        dateHeure.year,
+        dateHeure.month,
+        dateHeure.day,
+        8,
+        30,
+      );
       if (dateHeure.isAfter(limiteArrivee)) {
         return 'Retard';
       }
       return 'À l\'heure';
     } else if (type == 'Départ') {
-      DateTime limiteDepart = DateTime(dateHeure.year, dateHeure.month, dateHeure.day, 18, 30);
+      DateTime limiteDepart = DateTime(
+        dateHeure.year,
+        dateHeure.month,
+        dateHeure.day,
+        18,
+        30,
+      );
       if (dateHeure.isAfter(limiteDepart)) {
         return 'Heures Supp';
       }
@@ -154,7 +176,10 @@ class _PresencePageState extends State<PresencePage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text("Suivi de Présence", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(
+          "Suivi de Présence",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(color: Colors.white),
         ),
@@ -171,12 +196,17 @@ class _PresencePageState extends State<PresencePage> {
               _buildFilterSection(),
               SizedBox(height: 20),
               Expanded(
-                child: _isLoading
-                    ? Center(child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                ))
-                    : _buildPresenceList(),
+                child:
+                    _isLoading
+                        ? Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.blue,
+                            ),
+                          ),
+                        )
+                        : _buildPresenceList(),
               ),
             ],
           ),
@@ -191,30 +221,37 @@ class _PresencePageState extends State<PresencePage> {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: _filterOptions.map((option) {
-              return Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(option),
-                    selected: _selectedFilter == option,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedFilter = selected ? option : 'Tous';
-                      });
-                    },
-                    backgroundColor: Colors.white,
-                    selectedColor: primaryColor.withOpacity(0.2),
-                    checkmarkColor: primaryColor,
-                    labelStyle: TextStyle(
-                      color: _selectedFilter == option ? primaryColor : Color(0xFF2B9BD7),
+            children:
+                _filterOptions.map((option) {
+                  return Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(option),
+                      selected: _selectedFilter == option,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedFilter = selected ? option : 'Tous';
+                        });
+                      },
+                      backgroundColor: Colors.white,
+                      selectedColor: primaryColor.withOpacity(0.2),
+                      checkmarkColor: primaryColor,
+                      labelStyle: TextStyle(
+                        color:
+                            _selectedFilter == option
+                                ? primaryColor
+                                : Color(0xFF2B9BD7),
+                      ),
+                      side: BorderSide(
+                        color:
+                            _selectedFilter == option
+                                ? primaryColor
+                                : Colors.black,
+                        width: 1,
+                      ),
                     ),
-                    side: BorderSide(
-                      color: _selectedFilter == option ? primaryColor : Colors.black,
-                      width: 1,
-                    ),
-                  )
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ),
         SizedBox(height: 10),
@@ -224,7 +261,12 @@ class _PresencePageState extends State<PresencePage> {
 
   Widget _buildPresenceList() {
     if (_filteredPresences.isEmpty) {
-      return Center(child: Text('Aucune donnée correspondant aux filtres'));
+      return Center(
+        child: Text(
+          'Aucune donnée correspondant aux filtres',
+          style: TextStyle(fontSize: 25),
+        ),
+      );
     }
     return ListView.builder(
       itemCount: _filteredPresences.length,
@@ -255,13 +297,25 @@ class _PresencePageState extends State<PresencePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(presence['date'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        presence['date'],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                       SizedBox(height: 8),
-                      Text('${presence['type']} à ${presence['heure']}', style: TextStyle(fontSize: 14)),
+                      Text(
+                        '${presence['type']} à ${presence['heure']}',
+                        style: TextStyle(fontSize: 14),
+                      ),
                       if (presence['motif'].isNotEmpty)
                         Padding(
                           padding: EdgeInsets.only(top: 4),
-                          child: Text('Motif: ${presence['motif']}', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          child: Text(
+                            'Motif: ${presence['motif']}',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
                         ),
                     ],
                   ),
@@ -269,7 +323,10 @@ class _PresencePageState extends State<PresencePage> {
                 Chip(
                   labelPadding: EdgeInsets.symmetric(horizontal: 1),
                   backgroundColor: presence['color'].withOpacity(0.2),
-                  label: Text(presence['status'], style: TextStyle(color: presence['color'])),
+                  label: Text(
+                    presence['status'],
+                    style: TextStyle(color: presence['color']),
+                  ),
                 ),
               ],
             ),

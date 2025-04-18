@@ -75,8 +75,11 @@ class _PresenceUserState extends State<PresenceUser> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        shadowColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.white.withOpacity(0.5),
         title: const Text("Tableau de bord",style: TextStyle(color:Colors.black , fontWeight: FontWeight.bold, fontSize: 26),),
-        backgroundColor: Colors.white,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
