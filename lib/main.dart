@@ -23,6 +23,7 @@ Future<void> main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(UsersAdapter());
   await Hive.openBox('authBox');
+  await Hive.openBox('users');
 
 
   runApp(const MyApp());

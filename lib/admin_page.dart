@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:projets/utilisateur.dart';
 
@@ -23,7 +24,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final List<String> _filterOptions = ['Tous', 'Présents', 'Absents', 'Retards', 'Heures Supp','Pénalité'];
   bool _isLoading = true;
   List<Map<String, dynamic>> _employees = [];
-  List<Users> _allUsers = [];
   final SupabaseClient _supabase = Supabase.instance.client;
 
 
@@ -31,61 +31,49 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     _fetchAllData();
+
   }
 
-  Future<void> _initHive() async {
-    await Hive.openBox('presences');
-    await Hive.openBox('users');
-  }
 
   Future<void> _fetchAllData() async {
     try {
-      setState(() {
+      setState(()  {
         _isLoading = true;
       });
+      // Récupérer les données
 
-      final authBox = Hive.box('authBox');
-      Users user = authBox.get('stocker_user');
-
-      if (user == null || user.id == null) {
-        throw Exception('Utilisateur non trouvé');
-      }
-
-      // Récupérer les données de pointage
       final response = await _supabase
           .from('pointage')
-          .select()
-          .eq('idemploye', user.id)
+          .select(''' *,
+       
+          user(id,nom,prenom)
+        
+        ''')
           .order('date_heure', ascending: false);
+      Logger().i(response);
 
-      // Récupérer les utilisateurs depuis Hive
-      final usersBox = Hive.box('users');
-      _allUsers = usersBox.values.cast<Users>().toList();
+
+
 
       _employees = response.map<Map<String, dynamic>>((record) {
         DateTime dateHeure = DateTime.parse(record['date_heure']);
-        String date = DateFormat('dd/MM/yyyy').format(dateHeure);
+        String date = DateFormat('dd MMMM yyyy', 'fr_FR').format(dateHeure);
         String heureArrivee = record['type'] == 'Arrivee' ? DateFormat('HH:mm').format(dateHeure) : '';
         String heureDepart = record['type'] == 'Départ' ? DateFormat('HH:mm').format(dateHeure) : '';
-
+        final user = record['user'] as Map<String, dynamic>? ?? {};
+        final nomComplet = '${user['prenom']} ${user['nom']}';
         String status = _determineStatus(record, dateHeure);
         String penalty = status == 'Retard' ? _calculatePenalty(heureArrivee) : '';
         String heuresSupp = status == 'Heures Supp' ? _calculateHeuresSupp(heureDepart) : '';
 
-        // Trouver le nom de l'utilisateur
-        String userName = 'Inconnu';
-        try {
-          final user = _allUsers.firstWhere((u) => u.id == record['user']);
-          userName = '${user.prenom} ${user.nom}';
-        } catch (e) {
-          print('Utilisateur non trouvé pour id ${record['user']}');
-        }
+
+
 
         return {
-          'nom': userName,
+          'nom': nomComplet,
           'arrival': heureArrivee,
           'departure': heureDepart,
-          'date': dateHeure,
+          'date': date,
           'status': status,
           'avatar': Icons.person,
           'lateMotif': record['motif'] ?? record['raison'] ?? '',
@@ -104,6 +92,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       setState(() {
         _isLoading = false;
       });
+      Logger().e(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors de la récupération des données: $e')),
       );
@@ -174,7 +163,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   bool _isLate(String? arrival) {
-    if (arrival == null) return false;
+    if (arrival == null||arrival=="") return false;
     final time = arrival.split(':');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
@@ -182,8 +171,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   bool _isOvertime(String? departure) {
-    if (departure == null) return false;
+    if (departure == null ||departure=="" ) return false;
     final time = departure.split(':');
+
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
     return hour > 18 || (hour == 18 && minute > 30);
@@ -398,7 +388,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       }
 
       final nameMatch = _searchQuery.isEmpty ||
-          emp['name'].toLowerCase().contains(_searchQuery.toLowerCase());
+          emp['nom'].toLowerCase().contains(_searchQuery.toLowerCase());
 
       bool dateMatch = true;
       if (_selectedDateRange != null) {
@@ -594,15 +584,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
         padding: const EdgeInsets.symmetric(vertical: 25,horizontal: 20),
         child: Column(
           children: [
-            if (_isLoading)
-              LinearProgressIndicator()
-            else
               SizedBox(height: 10),
             _buildFilterSection(),
             Expanded(
               child: _isLoading
                   ? Center(child: CircularProgressIndicator())
-                  : ListView.builder(
+                  :ListView.builder(
                 itemCount: filteredEmployees.length,
                 itemBuilder: (context, index) {
                   final employee = filteredEmployees[index];
@@ -610,7 +597,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   final hasOvertime = _isOvertime(employee['departure']);
                   final isAbsent = _isAbsent(employee);
                   final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
-
                   return Card(
                     color: Colors.white,
                     margin: const EdgeInsets.all(5),
@@ -618,7 +604,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       leading: CircleAvatar(
                           backgroundColor: Colors.white,
                           child: Icon(employee['avatar'],color: Colors.blue,)),
-                      title: Text(employee['name'], style: TextStyle(
+                      title: Text(employee['nom'], style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black)),
                       subtitle: Column(
@@ -626,7 +612,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         children: [
                           Text('Statut: ${employee['status']}', style: TextStyle(
                               color: Colors.black)),
-                          Text('Date: ${DateFormat('dd/MM/yyyy').format(employee['date'])}', style: TextStyle(
+                          Text('Date: ${employee['date']}', style: TextStyle(
                               color: Colors.black)),
                           if (hasLate && _selectedIndex != 4)
                             Text('Retard: $lateMinutes min', style: TextStyle(

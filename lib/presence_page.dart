@@ -42,10 +42,11 @@ class _PresencePageState extends State<PresencePage> {
         throw Exception('Utilisateur non trouvé');
       }
 
-      // Récupérer les données de pointage
+      // Récupérer les données de pointage pour cet utilisateur
       final response = await _supabase
           .from('pointage')
           .select()
+          .eq('idemploye', user.id)
           .order('date_heure', ascending: false);
 
       // Transformer les données en format approprié
