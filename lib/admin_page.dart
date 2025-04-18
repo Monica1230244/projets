@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:projets/utilisateur.dart';
 
 
 class AdminDashboard extends StatefulWidget {
@@ -18,136 +21,117 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final TextEditingController _absenceMotifController = TextEditingController();
   String _selectedFilter = 'Tous';
   final List<String> _filterOptions = ['Tous', 'Présents', 'Absents', 'Retards', 'Heures Supp','Pénalité'];
-
-  final List<Map<String, dynamic>> _employees = [
-    {
-      'name': 'Jean ',
-      'arrival': '08:00',
-      'departure': '18:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Présent',
-      'avatar': Icons.person,
-    },
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _employees = [];
+  List<Users> _allUsers = [];
+  final SupabaseClient _supabase = Supabase.instance.client;
 
 
-    {
-      'name': 'Miriam',
-      'arrival': '08:15',
-      'departure': '18:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Présent',
-      'avatar': Icons.person,
-    },
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllData();
+  }
+
+  Future<void> _initHive() async {
+    await Hive.openBox('presences');
+    await Hive.openBox('users');
+  }
+
+  Future<void> _fetchAllData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final authBox = Hive.box('authBox');
+      Users user = authBox.get('stocker_user');
+
+      if (user == null || user.id == null) {
+        throw Exception('Utilisateur non trouvé');
+      }
+
+      // Récupérer les données de pointage
+      final response = await _supabase
+          .from('pointage')
+          .select()
+          .eq('idemploye', user.id)
+          .order('date_heure', ascending: false);
+
+      // Récupérer les utilisateurs depuis Hive
+      final usersBox = Hive.box('users');
+      _allUsers = usersBox.values.cast<Users>().toList();
+
+      _employees = response.map<Map<String, dynamic>>((record) {
+        DateTime dateHeure = DateTime.parse(record['date_heure']);
+        String date = DateFormat('dd/MM/yyyy').format(dateHeure);
+        String heureArrivee = record['type'] == 'Arrivee' ? DateFormat('HH:mm').format(dateHeure) : '';
+        String heureDepart = record['type'] == 'Départ' ? DateFormat('HH:mm').format(dateHeure) : '';
+
+        String status = _determineStatus(record, dateHeure);
+        String penalty = status == 'Retard' ? _calculatePenalty(heureArrivee) : '';
+        String heuresSupp = status == 'Heures Supp' ? _calculateHeuresSupp(heureDepart) : '';
+
+        // Trouver le nom de l'utilisateur
+        String userName = 'Inconnu';
+        try {
+          final user = _allUsers.firstWhere((u) => u.id == record['user']);
+          userName = '${user.prenom} ${user.nom}';
+        } catch (e) {
+          print('Utilisateur non trouvé pour id ${record['user']}');
+        }
+
+        return {
+          'nom': userName,
+          'arrival': heureArrivee,
+          'departure': heureDepart,
+          'date': dateHeure,
+          'status': status,
+          'avatar': Icons.person,
+          'lateMotif': record['motif'] ?? record['raison'] ?? '',
+          'overtimeMotif': record['motif'] ?? record['raison'] ?? '',
+          'validationStatus': 'En attente',
+          'penalty': penalty,
+          'heuresSupp': heuresSupp,
+          'absenceMotif': status == 'Absent' ? (record['motif'] ?? record['raison'] ?? '') : null,
+        };
+      }).toList();
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la récupération des données: $e')),
+      );
+    }
+  }
 
 
-    {
-      'name': 'Monica',
-      'arrival': '07:00',
-      'departure': '18:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Présent',
-      'avatar': Icons.person,
-    },
+  String _determineStatus(Map<String, dynamic> record, DateTime dateHeure) {
+    String type = record['type'] ?? '';
 
-    {
-      'name': 'Marie ',
-      'arrival': '08:45',
-      'departure': '18:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Retard',
-      'lateMotif': 'Problème de transport',
-      'validationStatus': 'En attente',
-      'penalty': _calculatePenalty('08:45'),
-      'avatar': Icons.person,
-    },
+    if (type == 'Arrivee') {
+      DateTime limiteArrivee = DateTime(dateHeure.year, dateHeure.month, dateHeure.day, 8, 30);
+      if (dateHeure.isAfter(limiteArrivee)) {
+        return 'Retard';
+      }
+      return 'Présent';
+    } else if (type == 'Départ') {
+      DateTime limiteDepart = DateTime(dateHeure.year, dateHeure.month, dateHeure.day, 18, 30);
+      if (dateHeure.isAfter(limiteDepart)) {
+        return 'Heures Supp';
+      }
+      return 'Présent';
+    } else if (type == 'Absence') {
+      return 'Absent';
+    }
 
-    {
-      'name': 'Prince',
-      'arrival': '08:00',
-      'departure': '19:45',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Heure Supp',
-      'overtimeMotif': 'Dossier urgent à terminer',
-      'validationStatus': 'En attente',
-      'avatar': Icons.person,
-    },
-
-    {
-      'name': 'Karel',
-      'arrival': '09:15',
-      'departure': '18:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Retard' ,
-      'lateMotif': 'Réveil tardif',
-      'validationStatus': 'En attente',
-      'penalty': _calculatePenalty('09:15'),
-      'avatar': Icons.person,
-    },
-
-    {
-      'name': 'Adna',
-      'arrival': '09:00',
-      'departure': '18:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Retard',
-      'lateMotif': 'Problème de voiture',
-      'validationStatus': 'En attente',
-      'penalty': _calculatePenalty('09:00'),
-      'avatar': Icons.person,
-    },
-
-    {
-      'name': 'Prude',
-      'arrival': '09:45',
-      'departure': '18:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Retard',
-      'lateMotif': 'Problème familial',
-      'validationStatus': 'En attente',
-      'penalty': _calculatePenalty('09:45'),
-      'avatar': Icons.person,
-    },
-
-    {
-      'name': 'Ruth',
-      'arrival': '08:39',
-      'departure': '20:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Retard & Heure Supp',
-      'lateMotif': 'Petit retard',
-      'overtimeMotif': 'Dossier urgent à terminer',
-      'validationStatus': 'En attente',
-      'penalty': _calculatePenalty('08:39'),
-      'avatar': Icons.person,
-    },
-
-    {
-      'name': 'Azaria',
-      'arrival': '08:20',
-      'departure': '18:30',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Présent',
-      'avatar': Icons.person,
-    },
-
-    {
-      'name': 'Charbel',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Absent',
-      'validationStatus': 'En attente',
-      'absenceMotif': null,
-      'avatar': Icons.person,
-    },
-
-    {
-      'name': 'Hamid',
-      'date': DateTime(2025, 4, 2),
-      'status': 'Absent',
-      'validationStatus': 'En attente',
-      'absenceMotif': 'Maladie (certificat médical fourni)',
-      'avatar': Icons.person,
-    },
-  ];
+    return 'Inconnu';
+  }
 
   static String _calculatePenalty(String arrivalTime) {
     final lateMinutes = _calculateLateMinutes(arrivalTime);
@@ -323,7 +307,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: RichText(
-
                             text: TextSpan(
                               style: const TextStyle(fontSize: 16, color: Colors.black),
                               children: <TextSpan>[
@@ -372,7 +355,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -408,7 +390,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           matchesStatus = emp['status'].contains('Retard');
           break;
         case 'Heures Supp':
-          matchesStatus = emp['status'].contains('Heure Supp');
+          matchesStatus = emp['status'].contains('Heures Supp');
           break;
         case 'Pénalité':
           matchesStatus = _isLate(emp['arrival']);
@@ -553,25 +535,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: const Text('REJETER', style: TextStyle(color: Colors.red)),
               ),
               ElevatedButton(
-
                 onPressed: () {
                   _updateStatus(employee, 'Validé', '');
                   Navigator.pop(context);
                 },
-                    style: ElevatedButton.styleFrom(
-                    backgroundColor:  Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                    shape: RoundedRectangleBorder(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
-        ),
-              ),
+                  ),
+                ),
                 child: const Text('VALIDER',style: TextStyle(color: Colors.black),),
-        ),
+              ),
             ] else ...[
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: const Text('FERMER',style: TextStyle(color: Colors.black),
-              ),
+                ),
               ),
             ],
           ],
@@ -613,11 +594,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
         padding: const EdgeInsets.symmetric(vertical: 25,horizontal: 20),
         child: Column(
           children: [
-
-            SizedBox(height: 10),
+            if (_isLoading)
+              LinearProgressIndicator()
+            else
+              SizedBox(height: 10),
             _buildFilterSection(),
             Expanded(
-              child: ListView.builder(
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : ListView.builder(
                 itemCount: filteredEmployees.length,
                 itemBuilder: (context, index) {
                   final employee = filteredEmployees[index];
@@ -629,7 +614,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   return Card(
                     color: Colors.white,
                     margin: const EdgeInsets.all(5),
-
                     child: ListTile(
                       leading: CircleAvatar(
                           backgroundColor: Colors.white,
@@ -643,25 +627,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           Text('Statut: ${employee['status']}', style: TextStyle(
                               color: Colors.black)),
                           Text('Date: ${DateFormat('dd/MM/yyyy').format(employee['date'])}', style: TextStyle(
-
                               color: Colors.black)),
                           if (hasLate && _selectedIndex != 4)
                             Text('Retard: $lateMinutes min', style: TextStyle(
-
                                 color: Colors.black)),
                           if (hasLate && _selectedIndex == 4)
                             Text('Pénalité: ${_calculatePenaltyFromMinutes(lateMinutes)}',
                                 style: TextStyle(
-
                                     color: Colors.black)),
                           if (hasOvertime)
                             Text('Heures supp: ${_calculateHeuresSupp(employee['departure'])}', style: TextStyle(
-
                                 color: Colors.black)),
                           if (isAbsent && employee['absenceMotif'] != null)
                             Text('Motif: ${employee['absenceMotif']}',
                                 style: const TextStyle(fontStyle: FontStyle.italic,
-                                    )),
+                                )),
                         ],
                       ),
                       trailing: (hasLate || hasOvertime || isAbsent)
@@ -680,11 +660,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ],
         ),
       ),
-
-
-
-
-
     );
   }
 
