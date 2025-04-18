@@ -283,6 +283,9 @@ class _CreateEmployeeState extends State<CreateEmployee> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        shadowColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         backgroundColor: Colors.white,
         title: Text(
           'Créer un compte employé',
@@ -374,7 +377,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       dropdownColor: Colors.white,
       value: _selectedtype,
       decoration: _buildInputDecoration('Type*', Icons.business),
-      hint: Text('Sélectionnez un Type'),
+      hint: Text('Sélectionnez'),
       items:
       _types.map<DropdownMenuItem<String>>((type) {
         return DropdownMenuItem<String>(
@@ -433,7 +436,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       dropdownColor: Colors.white,
       value: _selectedDepartement,
       decoration: _buildInputDecoration('Département*', Icons.business),
-      hint: Text('Sélectionnez un département'),
+      hint: Text('Sélectionnez'),
       items:
           _departements.map<DropdownMenuItem<String>>((dept) {
             return DropdownMenuItem<String>(
@@ -457,7 +460,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       dropdownColor: Colors.white,
       value: _selectedPoste,
       decoration: _buildInputDecoration('Poste*', Icons.work),
-      hint: Text('Sélectionnez un poste'),
+      hint: Text('Sélectionnez'),
       items:
           getFilteredPostes().map<DropdownMenuItem<String>>((poste) {
             return DropdownMenuItem<String>(

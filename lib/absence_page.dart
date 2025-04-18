@@ -17,6 +17,9 @@ class _AbsencePageState extends State<AbsencePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        shadowColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text("Suivie de Présence", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.white,
         leading: IconButton(
