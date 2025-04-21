@@ -1,33 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:projets/absence_page.dart';
 import 'package:projets/heure_supp.dart';
 import 'package:projets/presence_page.dart';
 import 'package:projets/retard_page.dart';
-import 'constants.dart';
+import 'package:projets/utilisateur.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:projets/constants.dart';
+import 'penalite.dart';
 
 class PresenceUser extends StatefulWidget {
   const PresenceUser({Key? key}) : super(key: key);
   @override
   _PresenceUserState createState() => _PresenceUserState();
 }
+
 class _PresenceUserState extends State<PresenceUser> {
   late DateTime _selectedDate;
   late DateTime _selectedEndDate;
-  int presenceCount = 12;
-  int totalJours = 30;
-  int absenceCount = 3;
-  int retardCount = 2;
-  int heuresSuppCount = 5;
-  double penaliteMontant = 1500.0;
+  int presenceCount = 0;
+  int totalJours = 0;
+  int absenceCount = 0;
+  int retardCount = 0;
+  int heuresSuppCount = 0;
+  double penaliteMontant = 0;
+
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('fr_FR', null);
     _selectedDate = DateTime.now();
     _selectedEndDate = DateTime.now().add(const Duration(days: 30));
+    _loadDataFromSupabase();
   }
+
   Future<void> _selectDate(BuildContext context, bool isStart) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -35,19 +44,6 @@ class _PresenceUserState extends State<PresenceUser> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
       locale: const Locale('fr', 'FR'),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Color(0xFF2B9BD7),
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (pickedDate != null) {
@@ -63,6 +59,7 @@ class _PresenceUserState extends State<PresenceUser> {
           totalJours = _selectedEndDate.difference(_selectedDate).inDays + 1;
         }
       });
+      _loadDataFromSupabase();
     }
   }
 
@@ -70,30 +67,99 @@ class _PresenceUserState extends State<PresenceUser> {
     return DateFormat('dd MMM yyyy', 'fr_FR').format(date);
   }
 
+  Future<void> _loadDataFromSupabase() async {
+    final supabase = Supabase.instance.client;
+    final authBox = Hive.box('authBox');
+    Users user = authBox.get('stocker_user');
+
+    if (user == null || user.id == null) {
+      print('Utilisateur non trouvé dans Hive');
+      return;
+    }
+
+    final userId = user.id;
+    final start = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final end = DateTime(_selectedEndDate.year, _selectedEndDate.month, _selectedEndDate.day, 23, 59, 59);
+
+    try {
+      final response = await supabase
+          .from('pointage')
+          .select()
+          .eq('idemploye', userId)
+          .gte('date_heure', start.toIso8601String())
+          .lte('date_heure', end.toIso8601String())
+          .order('date_heure', ascending: true);
+Logger().d(response);
+      final List data = response;
+
+      final Map<String, List<DateTime>> pointagesParJour = {};
+
+      for (var item in data) {
+        final dateHeure = DateTime.parse(item['date_heure']);
+        final jourKey = DateFormat('yyyy-MM-dd').format(dateHeure);
+        pointagesParJour.putIfAbsent(jourKey, () => []);
+        pointagesParJour[jourKey]!.add(dateHeure);
+      }
+
+      int presence = 0;
+      int retard = 0;
+      int heuresSupp = 0;
+
+      pointagesParJour.forEach((jour, liste) {
+        liste.sort();
+        if (liste.isNotEmpty) presence += 1;
+
+        final arrivee = liste.first;
+        final depart = liste.last;
+
+        final arriveeTime = TimeOfDay.fromDateTime(arrivee);
+        final departTime = TimeOfDay.fromDateTime(depart);
+
+        if ((arriveeTime.hour > 8 || (arriveeTime.hour == 8 && arriveeTime.minute > 30)) && arriveeTime.hour < 12) {
+          final retardMinutes = (arriveeTime.hour - 8) * 60 + (arriveeTime.minute - 30);
+          retard += 1;
+
+        }
+
+
+        if (departTime.hour > 18 || (departTime.hour == 18 && departTime.minute > 30)) {
+          int minutesSupp = ((departTime.hour - 18) * 60 + (departTime.minute - 30));
+          heuresSupp += minutesSupp;
+        }
+      });
+
+      int totalJoursCalcul = _selectedEndDate.difference(_selectedDate).inDays + 1;
+      int absences = totalJoursCalcul - presence;
+
+      //  Appel au service pour calculer la pénalité
+      final penaliteRetards = await RetardService.calculerPenaliteTotale(start, end);
+
+      setState(() {
+        totalJours = totalJoursCalcul;
+        presenceCount = presence;
+        absenceCount = absences;
+        retardCount = retard;
+        heuresSuppCount = (heuresSupp / 60).round();
+        penaliteMontant = penaliteRetards.toDouble();
+      });
+    } catch (e) {
+      print("Erreur Supabase: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        shadowColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
         backgroundColor: Colors.white.withOpacity(0.5),
-        title: const Text("Tableau de bord",style: TextStyle(color:Colors.black , fontWeight: FontWeight.bold, fontSize: 26),),
+        title: const Text("Tableau de bord", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 26)),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(
-              context
-            );
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
-        child:
-        Container(
-        decoration: BoxDecoration(
-        ),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -101,52 +167,8 @@ class _PresenceUserState extends State<PresenceUser> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Column(
-                    children: [
-                      const Text("Du", style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,)),
-                      const SizedBox(height: 5),
-                      GestureDetector(
-                        onTap: () => _selectDate(context, true),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: primaryColor),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today, size: 20 ,color:Colors.blueAccent),
-                              const SizedBox(width: 8),
-                              Text(_formatDate(_selectedDate), style: TextStyle(color: Color(0xFF2B9BD7)), ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      const Text("Au", style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 5),
-                      GestureDetector(
-                        onTap: () => _selectDate(context, false),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: primaryColor),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today, size: 20 , color:Colors.blueAccent),
-                              const SizedBox(width: 8),
-                              Text(_formatDate(_selectedEndDate), style: TextStyle(color: Color(0xFF2B9BD7)),),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildDateSelector("Du", _selectedDate, () => _selectDate(context, true)),
+                  _buildDateSelector("Au", _selectedEndDate, () => _selectDate(context, false)),
                 ],
               ),
               const SizedBox(height: 50),
@@ -155,49 +177,63 @@ class _PresenceUserState extends State<PresenceUser> {
                 color: Colors.green,
                 text: "Présence",
                 count: "$presenceCount/$totalJours",
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PresencePage()),
-                ),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PresencePage())),
               ),
               _buildOptionTile(
                 icon: Icons.cancel,
                 color: Colors.red,
                 text: "Absence",
                 count: "$absenceCount/$totalJours",
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AbsencePage()),
-                ),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AbsencePage())),
               ),
               _buildOptionTile(
                 icon: Icons.timer,
                 color: Colors.orange,
                 text: "Retard",
                 count: "$retardCount/$totalJours",
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RetardPage()),
-                ),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => RetardPage())),
               ),
               _buildOptionTile(
                 icon: Icons.access_time,
                 color: Colors.blue,
                 text: "Heures Supp",
                 count: "$heuresSuppCount h",
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HeuresSupplementairesPage()),
-                ),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => HeuresSupplementairesPage())),
               ),
               _buildPenaltyTile(),
             ],
           ),
         ),
       ),
-      ),
     );
   }
+
+  Widget _buildDateSelector(String label, DateTime date, VoidCallback onTap) {
+    return Column(
+      children: [
+        Text(label, style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(color: primaryColor),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 20, color: Colors.blueAccent),
+                const SizedBox(width: 8),
+                Text(_formatDate(date), style: TextStyle(color: Color(0xFF2B9BD7))),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildOptionTile({
     required IconData icon,
     required Color color,
@@ -209,16 +245,14 @@ class _PresenceUserState extends State<PresenceUser> {
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 30),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: ListTile(
-            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             leading: Icon(icon, color: color, size: 28),
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -229,11 +263,7 @@ class _PresenceUserState extends State<PresenceUser> {
                   alignment: Alignment.centerRight,
                   child: Text(
                     count,
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ],
@@ -243,21 +273,20 @@ class _PresenceUserState extends State<PresenceUser> {
       ),
     );
   }
+
   Widget _buildPenaltyTile() {
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 30),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: () {},
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: ListTile(
-            contentPadding: EdgeInsets.symmetric(horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             leading: Icon(Icons.money_off, color: Colors.purple, size: 28),
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -268,11 +297,7 @@ class _PresenceUserState extends State<PresenceUser> {
                   alignment: Alignment.centerRight,
                   child: Text(
                     "${penaliteMontant.toStringAsFixed(0)} FR",
-                    style: TextStyle(
-                      color: Colors.purple,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.purple, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ],
