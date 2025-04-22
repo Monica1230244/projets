@@ -158,7 +158,7 @@ class Accueil extends StatelessWidget {
         'idemploye':user.id,
         'date_heure': now.toIso8601String(),
         'type': "Arrivee",
-             'statut':'En attente',
+
       };
       Logger().i(pointage);
 
@@ -244,7 +244,7 @@ class Accueil extends StatelessWidget {
         'idemploye':user.id,
         'date_heure': now.toIso8601String(),
         'type': "Départ",
-        'statut':'En attente',
+
       };
       Logger().i(pointage);
 

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:projets/utilisateur.dart';
-
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -26,34 +23,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
   List<Map<String, dynamic>> _employees = [];
   final SupabaseClient _supabase = Supabase.instance.client;
 
-
   @override
   void initState() {
     super.initState();
     _fetchAllData();
-
   }
-
 
   Future<void> _fetchAllData() async {
     try {
-      setState(()  {
+      setState(() {
         _isLoading = true;
       });
-      // Récupérer les données
 
       final response = await _supabase
           .from('pointage')
-          .select(''' *,
-       
-          user(id,nom,prenom)
-        
-        ''')
+          .select(''' *, user(id,nom,prenom) ''')
           .order('date_heure', ascending: false);
+
       Logger().i(response);
-
-
-
 
       _employees = response.map<Map<String, dynamic>>((record) {
         DateTime dateHeure = DateTime.parse(record['date_heure']);
@@ -62,26 +49,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
         String heureDepart = record['type'] == 'Départ' ? DateFormat('HH:mm').format(dateHeure) : '';
         final user = record['user'] as Map<String, dynamic>? ?? {};
         final nomComplet = '${user['prenom']} ${user['nom']}';
-        String status = _determineStatus(record, dateHeure);
+       String status = _determineStatus(record, dateHeure);
+       Logger().d(status);
         String penalty = status == 'Retard' ? _calculatePenalty(heureArrivee) : '';
         String heuresSupp = status == 'Heures Supp' ? _calculateHeuresSupp(heureDepart) : '';
 
+            return {
 
-
-
-        return {
+          'id':record['idemploye'],
           'nom': nomComplet,
           'arrival': heureArrivee,
           'departure': heureDepart,
           'date': date,
+          'date_heure': dateHeure,
           'status': status,
           'avatar': Icons.person,
           'lateMotif': record['motif'] ?? record['raison'] ?? '',
           'overtimeMotif': record['motif'] ?? record['raison'] ?? '',
-          'validationStatus': 'En attente',
+          'validationStatus': record['validation_status'] ?? 'En attente',
           'penalty': penalty,
           'heuresSupp': heuresSupp,
           'absenceMotif': status == 'Absent' ? (record['motif'] ?? record['raison'] ?? '') : null,
+          'rejectionReason': record['rejection_reason'],
         };
       }).toList();
 
@@ -98,7 +87,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       );
     }
   }
-
 
   String _determineStatus(Map<String, dynamic> record, DateTime dateHeure) {
     String type = record['type'] ?? '';
@@ -128,6 +116,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   static int _calculateLateMinutes(String arrivalTime) {
+    if (arrivalTime.isEmpty) return 0;
     final parts = arrivalTime.split(':');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);
@@ -140,21 +129,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
     } else if (lateMinutes < 10) {
       return 'Avertissement (retard de $lateMinutes min)';
     } else if (lateMinutes < 20) {
-      return '5000 F (retard de $lateMinutes min)';
+      return '5.000 F (retard de $lateMinutes min)';
     } else if (lateMinutes < 30) {
-      return '10000 F (retard de $lateMinutes min)';
+      return '10.000 F (retard de $lateMinutes min)';
     } else if (lateMinutes < 40) {
-      return '15000 F (retard de $lateMinutes min)';
+      return '15.000 F (retard de $lateMinutes min)';
     } else if (lateMinutes < 50) {
-      return '20000 F (retard de $lateMinutes min)';
+      return '20.000 F (retard de $lateMinutes min)';
     } else if (lateMinutes < 60) {
-      return '25000 F (retard de $lateMinutes min)';
+      return '25.000 F (retard de $lateMinutes min)';
     } else {
-      return '30000 F (retard de $lateMinutes min)';
+      return '30.000 F (retard de $lateMinutes min)';
     }
   }
 
   String _calculateHeuresSupp(String departure) {
+    if (departure.isEmpty) return '';
     final time = departure.split(':');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
@@ -163,7 +153,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   bool _isLate(String? arrival) {
-    if (arrival == null||arrival=="") return false;
+    if (arrival == null || arrival.isEmpty) return false;
     final time = arrival.split(':');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
@@ -171,9 +161,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   bool _isOvertime(String? departure) {
-    if (departure == null ||departure=="" ) return false;
+    if (departure == null || departure.isEmpty) return false;
     final time = departure.split(':');
-
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
     return hour > 18 || (hour == 18 && minute > 30);
@@ -199,7 +188,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Row(
             children: _filterOptions.map((option) {
               return Padding(
-                padding: EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.only(right: 10),
                 child: FilterChip(
                   label: Text(option),
                   selected: _selectedFilter == option,
@@ -219,7 +208,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             }).toList(),
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
       ],
     );
   }
@@ -244,20 +233,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
-
                 TextField(
                   controller: _filterController,
                   cursorColor: Colors.black,
                   decoration: InputDecoration(
                     labelText: 'Rechercher par nom',
-                    labelStyle: TextStyle(color:Color(0xFF000000) ),
+                    labelStyle: const TextStyle(color: Color(0xFF000000)),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFF000000))
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFF000000)),
+                      borderSide: const BorderSide(color: Color(0xFF000000)),
                     ),
                     prefixIcon: const Icon(Icons.search),
                   ),
@@ -322,7 +310,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 25),
                 Row(
                   children: [
@@ -337,7 +324,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             _selectedFilter = 'Tous';
                           });
                         },
-                        child: const Text('Annuler',style: TextStyle(color: Colors.black)),
+                        child: const Text('Annuler', style: TextStyle(color: Colors.black)),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -352,7 +339,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                        child: const Text('Appliquer',style: TextStyle(color: Colors.black),),
+                        child: const Text('Appliquer', style: TextStyle(color: Colors.black)),
                       ),
                     ),
                   ],
@@ -392,8 +379,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
       bool dateMatch = true;
       if (_selectedDateRange != null) {
-        dateMatch = emp['date'].isAfter(_selectedDateRange!.start.subtract(const Duration(days: 1))) &&
-            emp['date'].isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
+        final empDate = DateFormat('dd MMMM yyyy', 'fr_FR').parse(emp['date']);
+        dateMatch = empDate.isAfter(_selectedDateRange!.start.subtract(const Duration(days: 1))) &&
+            empDate.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
       }
 
       return matchesStatus && nameMatch && dateMatch;
@@ -449,7 +437,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          title: Text('Validation ${employee['name']}'),
+          title: Text('Validation ${employee['nom']}'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -458,7 +446,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 if (isAbsent) ...[
                   const Text('DÉTAILS ABSENCE',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text('Date: ${DateFormat('dd/MM/yyyy').format(employee['date'])}'),
+                  Text('Date: ${employee['date']}'),
                   const SizedBox(height: 10),
                   const Text('Motif fourni:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -469,10 +457,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 if (hasLate) ...[
                   const Text('DÉTAILS RETARD',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text('Arrivé à ${employee['arrival']} (Normale: 08:30)'),
+                  Text('Arrivé à ${employee['arrival']} (Normal: 08:30)'),
                   Text('Retard: $lateMinutes min'),
                   Text('Sanction: ${_calculatePenaltyFromMinutes(lateMinutes)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.red,
                           fontSize: 16)),
@@ -487,7 +475,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   const Text('DÉTAILS HEURES SUPP',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
                   Text('Départ à ${employee['departure']} (Normale: 18:30)'),
-                  Text('Heures supplémentaires: ${_calculateHeuresSupp(employee['departure'])}'),
+                  Text('Heures supplémentaires: ${employee['heuresSupp']}'),
                   const SizedBox(height: 10),
                   const Text('Motif fourni:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -519,30 +507,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SnackBar(content: Text('Veuillez saisir un motif de rejet')));
                     return;
                   }
-                  _updateStatus(employee, 'Rejeté', _rejectionController.text);
+                  updateStatus(
+                    employeeId: employee['id'].toString(),
+                    newStatus: 'Rejeté',
+                  );
                   Navigator.pop(context);
                 },
                 child: const Text('REJETER', style: TextStyle(color: Colors.red)),
               ),
               ElevatedButton(
                 onPressed: () {
-                  _updateStatus(employee, 'Validé', '');
+                  updateStatus(
+                    employeeId: employee['id'].toString(),
+                    newStatus: 'Validé',
+                  );
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: const Text('VALIDER',style: TextStyle(color: Colors.black),),
+                child: const Text('VALIDER', style: TextStyle(color: Colors.black)),
               ),
             ] else ...[
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('FERMER',style: TextStyle(color: Colors.black),
-                ),
+                child: const Text('FERMER', style: TextStyle(color: Colors.black)),
               ),
             ],
           ],
@@ -551,14 +544,32 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  void _updateStatus(Map<String, dynamic> employee, String status, String reason) {
-    setState(() {
-      employee['validationStatus'] = status;
-      if (status == 'Rejeté') {
-        employee['rejectionReason'] = reason.isNotEmpty ? reason : 'Non spécifié';
-      }
-    });
+  Future<void> updateStatus({
+    required String employeeId,
+    required String newStatus,
+  }) async {
+    try {
+      final supabase = Supabase.instance.client;
+      Logger().i(employeeId);
+
+      // Requête pour mettre à jour le statut dans la table pointage
+      await supabase
+          .from('pointage')
+          .update({
+        'statut': newStatus,
+       // 'updated_at': DateTime.now().toIso8601String(),
+      })
+          .eq('idemploye', employeeId);
+
+
+      Logger().i('Statut employé $employeeId mis à jour: $newStatus');
+
+    } catch (e) {
+      Logger().e('Erreur mise à jour statut employé: $e');
+      throw Exception('Erreur lors de la mise à jour du statut');
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -569,7 +580,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         elevation: 0,
         title: const Text('Tableau de bord Admin'),
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
           ),
         ),
@@ -581,15 +592,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 25,horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
         child: Column(
           children: [
-              SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildFilterSection(),
             Expanded(
               child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  :ListView.builder(
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
                 itemCount: filteredEmployees.length,
                 itemBuilder: (context, index) {
                   final employee = filteredEmployees[index];
@@ -603,31 +614,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     child: ListTile(
                       leading: CircleAvatar(
                           backgroundColor: Colors.white,
-                          child: Icon(employee['avatar'],color: Colors.blue,)),
-                      title: Text(employee['nom'], style: TextStyle(
+                          child: Icon(employee['avatar'], color: Colors.blue)),
+                      title: Text(employee['nom'], style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black)),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Statut: ${employee['status']}', style: TextStyle(
+                          Text('Statut: ${employee['status']}', style: const TextStyle(
                               color: Colors.black)),
-                          Text('Date: ${employee['date']}', style: TextStyle(
+                          Text('Date: ${employee['date']}', style: const TextStyle(
                               color: Colors.black)),
                           if (hasLate && _selectedIndex != 4)
-                            Text('Retard: $lateMinutes min', style: TextStyle(
+                            Text('Retard: $lateMinutes min', style: const TextStyle(
                                 color: Colors.black)),
                           if (hasLate && _selectedIndex == 4)
                             Text('Pénalité: ${_calculatePenaltyFromMinutes(lateMinutes)}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: Colors.black)),
                           if (hasOvertime)
-                            Text('Heures supp: ${_calculateHeuresSupp(employee['departure'])}', style: TextStyle(
+                            Text('Heures supp: ${employee['heuresSupp']}', style: const TextStyle(
                                 color: Colors.black)),
                           if (isAbsent && employee['absenceMotif'] != null)
                             Text('Motif: ${employee['absenceMotif']}',
-                                style: const TextStyle(fontStyle: FontStyle.italic,
-                                )),
+                                style: const TextStyle(fontStyle: FontStyle.italic)),
                         ],
                       ),
                       trailing: (hasLate || hasOvertime || isAbsent)
