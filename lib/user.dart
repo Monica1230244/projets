@@ -33,8 +33,9 @@ class _PresenceUserState extends State<PresenceUser> {
   void initState() {
     super.initState();
     initializeDateFormatting('fr_FR', null);
-    _selectedDate = DateTime.now();
-    _selectedEndDate = DateTime.now().add(const Duration(days: 30));
+     final DateTime now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, 1);
+    _selectedEndDate = DateTime(now.year, now.month + 1, 0);
     _loadDataFromSupabase();
   }
 
