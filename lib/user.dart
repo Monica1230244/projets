@@ -45,7 +45,21 @@ class _PresenceUserState extends State<PresenceUser> {
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
       locale: const Locale('fr', 'FR'),
+
+      builder: (BuildContext context , Widget? child){
+        return Theme(
+            data: ThemeData.light().copyWith(
+              colorScheme: ColorScheme.light(
+                primary:Color(0xFF2B9BD7),
+                surface: Colors.white,
+                onSurface: Colors.black,
+              )
+            ),
+            child: child!,
+        );
+      }
     );
+
 
     if (pickedDate != null) {
       setState(() {
