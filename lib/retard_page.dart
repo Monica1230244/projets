@@ -37,7 +37,7 @@ class _RetardPageState extends State<RetardPage> {
 
       final tousLesPointages = List<Map<String, dynamic>>.from(response);
 
-      // Garder uniquement les retards du matin entre 06h00 et 12h00
+      // Garder uniquement les retards du matin
       final retards = tousLesPointages.where((pointage) {
         final dateHeureStr = pointage['date_heure'];
         if (dateHeureStr == null) return false;
@@ -46,7 +46,7 @@ class _RetardPageState extends State<RetardPage> {
         final h = dateHeure.hour;
         final m = dateHeure.minute;
 
-        // Un retard est une arrivée > 08:30 MAIS avant 12h00
+
         final estApres0830 = (h > 8) || (h == 8 && m > 30);
         final estAvantMidi = h < 12;
 

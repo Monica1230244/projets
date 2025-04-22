@@ -27,6 +27,7 @@ class _PresenceUserState extends State<PresenceUser> {
   int retardCount = 0;
   int heuresSuppCount = 0;
   double penaliteMontant = 0;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -141,9 +142,11 @@ Logger().d(response);
         retardCount = retard;
         heuresSuppCount = (heuresSupp / 60).round();
         penaliteMontant = penaliteRetards.toDouble();
+        isLoading = false;
       });
     } catch (e) {
       print("Erreur Supabase: $e");
+      isLoading = false;
     }
   }
 
@@ -159,7 +162,14 @@ Logger().d(response);
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
+      body:  isLoading
+          ? Center(child: CircularProgressIndicator(
+        strokeWidth: 3,
+        valueColor: AlwaysStoppedAnimation<Color>(
+          Colors.blue,
+        ),
+      ))
+          :SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
