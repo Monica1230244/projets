@@ -55,6 +55,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return {
 
           'id':record['idemploye'],
+              'idpointage':record['id'],
           'nom': nomComplet,
           'arrival': heureArrivee,
           'departure': heureDepart,
@@ -507,7 +508,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   }
                   updateStatus(
                     employeeId: employee['id'].toString(),
-                    newStatus: 'Rejeté',
+                     idpointage: employee['idpointage'].toString(), newStatus: 'Rejeté',
                   );
                   Navigator.pop(context);
                 },
@@ -517,7 +518,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 onPressed: () {
                   updateStatus(
                     employeeId: employee['id'].toString(),
-                    newStatus: 'Validé',
+                    newStatus: 'Validé',  idpointage: employee['idpointage'].toString(),
                   );
                   Navigator.pop(context);
                 },
@@ -545,6 +546,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Future<void> updateStatus({
     required String employeeId,
     required String newStatus,
+    required String idpointage,
   }) async {
     try {
       final supabase = Supabase.instance.client;
@@ -557,8 +559,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         'statut': newStatus,
        // 'updated_at': DateTime.now().toIso8601String(),
       })
-          .eq('idemploye', employeeId);
-
+          .eq('idemploye', employeeId)
+           .eq('id',idpointage);
+Logger().i(idpointage);
 
       Logger().i('Statut employé $employeeId mis à jour: $newStatus');
 
