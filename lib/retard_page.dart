@@ -1,42 +1,93 @@
 import 'package:flutter/material.dart';
-import 'package:projets/accueil_page.dart';
-import 'package:projets/heure_supp.dart';
+import 'package:hive/hive.dart';
+import 'package:projets/constants.dart';
 import 'package:projets/user.dart';
-
-import 'constants.dart';
+import 'package:projets/utilisateur.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RetardPage extends StatefulWidget {
-  final List<Map<String, String>> presences = [
-    {"date": "2025-03-02", "heure": "09:40", "heure_depart": "18:00", "motif": "Permission", "status": "Validé"},
-    {"date": "2025-03-03", "heure": "08:45", "heure_depart": "17:30", "motif": "", "status": ""},
-    {"date": "2025-03-06", "heure": "09:00", "heure_depart": "18:30", "motif": "Permission", "status": "En attente"},
-    {"date": "2025-03-03", "heure": "08:45", "heure_depart": "17:30", "motif": "Retard", "status": "Rejeté"},
-    {"date": "2025-03-06", "heure": "09:00", "heure_depart": "18:30", "motif": "Permission", "status": "Validé"},
-  ];
-
   @override
   _RetardPageState createState() => _RetardPageState();
 }
 
 class _RetardPageState extends State<RetardPage> {
-  int calculerMinutesRetard(String heureArrivee) {
-    final parts = heureArrivee.split(':');
-    final heures = int.parse(parts[0]);
-    final minutes = int.parse(parts[1]);
+  List<Map<String, dynamic>> presences = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    chargerRetards();
+  }
+
+  Future<void> chargerRetards() async {
+    try {
+      final authBox = Hive.box('authBox');
+      Users user = authBox.get('stocker_user');
+
+      if (user == null || user.id == null) {
+        throw Exception('Utilisateur non trouvé');
+      }
+
+      final response = await Supabase.instance.client
+          .from('pointage')
+          .select()
+          .eq('idemploye', user.id)
+          .order('date_heure', ascending: false);
+
+      final tousLesPointages = List<Map<String, dynamic>>.from(response);
+
+      // Garder uniquement les retards du matin
+      final retards = tousLesPointages.where((pointage) {
+        final dateHeureStr = pointage['date_heure'];
+        if (dateHeureStr == null) return false;
+
+        final dateHeure = DateTime.parse(dateHeureStr);
+        final h = dateHeure.hour;
+        final m = dateHeure.minute;
+
+
+        final estApres0830 = (h > 8) || (h == 8 && m > 30);
+        final estAvantMidi = h < 12;
+
+        return estApres0830 && estAvantMidi;
+      }).toList();
+
+
+      setState(() {
+        presences = retards;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print('Erreur lors du chargement des retards : $e');
+    }
+  }
+
+  int calculerMinutesRetard(DateTime dateHeure) {
+    final heureArrivee = dateHeure.hour;
+    final minuteArrivee = dateHeure.minute;
 
     const heureReference = 8;
     const minuteReference = 30;
 
-    if (heures < heureReference || (heures == heureReference && minutes <= minuteReference)) {
+    if (heureArrivee < heureReference || (heureArrivee == heureReference && minuteArrivee <= minuteReference)) {
       return 0;
     }
-    return (heures - heureReference) * 60 + (minutes - minuteReference);
+    return (heureArrivee - heureReference) * 60 + (minuteArrivee - minuteReference);
   }
 
   @override
   Widget build(BuildContext context) {
-    final totalMinutesRetard = widget.presences.fold(0, (sum, p) => sum + calculerMinutesRetard(p['heure']!));
     final penalitePar10Min = 5000;
+
+    final totalMinutesRetard = presences.fold(0, (sum, p) {
+      final dateHeure = DateTime.parse(p['date_heure']);
+      return sum + calculerMinutesRetard(dateHeure);
+    });
+
     final totalPenalite = (totalMinutesRetard ~/ 10) * penalitePar10Min;
 
     return Scaffold(
@@ -47,17 +98,22 @@ class _RetardPageState extends State<RetardPage> {
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(
-              context
-            );
-          },
+          onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Retards',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+        title: Text(
+          'Retards',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        ),
         backgroundColor: Colors.white,
+      ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator(
+        strokeWidth: 3,
+        valueColor: AlwaysStoppedAnimation<Color>(
+          Colors.blue,
         ),
-      body: Column(
+      ))
+          : Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -117,7 +173,6 @@ class _RetardPageState extends State<RetardPage> {
               ),
             ),
           ),
-
           if (totalMinutesRetard == 0)
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -133,12 +188,14 @@ class _RetardPageState extends State<RetardPage> {
           Expanded(
             child: ListView.builder(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              itemCount: widget.presences.length,
+              itemCount: presences.length,
               itemBuilder: (context, index) {
-                final retard = widget.presences[index];
-                final minutesRetard = calculerMinutesRetard(retard['heure']!);
+                final retard = presences[index];
+                final dateHeure = DateTime.parse(retard['date_heure']);
+                final minutesRetard = calculerMinutesRetard(dateHeure);
                 final hasRetard = minutesRetard > 0;
                 final penalite = (minutesRetard ~/ 10) * penalitePar10Min;
+
 
                 IconData statusIcon;
                 Color statusColor;
@@ -168,7 +225,7 @@ class _RetardPageState extends State<RetardPage> {
                 }
 
                 return Card(
-                  color: Colors.white ,
+                  color: Colors.white,
                   margin: EdgeInsets.only(bottom: 24),
                   elevation: 2,
                   shape: RoundedRectangleBorder(
@@ -200,15 +257,16 @@ class _RetardPageState extends State<RetardPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${retard['date']}',
+                                  dateHeure.toLocal().toString().split(' ')[0],
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: hasRetard ? Colors.deepPurple : Colors.black,
+                                    fontSize: 20,
+                                    color: Color(0xFF2B9BD7),
                                   ),
                                 ),
                                 SizedBox(height: 4),
                                 Text(
-                                  'Arrivée: ${retard['heure']} ${hasRetard ? '(Retard: ${minutesRetard} min)' : ''}',
+                                  'Arrivée: ${dateHeure.hour.toString().padLeft(2, '0')}:${dateHeure.minute.toString().padLeft(2, '0')} (Retard: ${minutesRetard} min)',
                                 ),
                                 if (hasRetard) SizedBox(height: 2),
                                 if (hasRetard)
@@ -228,19 +286,21 @@ class _RetardPageState extends State<RetardPage> {
                                 ),
                                 if (retard['motif']!.isNotEmpty)
                                   SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      Icon(statusIcon, color: statusColor, size: 16),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Status: $statusText',
-                                        style: TextStyle(color: statusColor),
-                                      ),
-                                    ],
-                                  ),
+                                Row(
+                                  children: [
+                                    Icon(statusIcon, color: statusColor, size: 16),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Status: $statusText',
+                                      style: TextStyle(color: statusColor),
+                                    ),
+                                  ],
+                                ),
                               ],
+
                             ),
                           ),
+
                         ],
                       ),
                     ),

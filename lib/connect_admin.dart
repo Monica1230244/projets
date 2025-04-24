@@ -26,7 +26,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   String? _selectedtype;
   String? _selectedDepartement;
   String? _selectedPoste;
-  bool _isLoading = false;
+  bool  isLoading = false;
 
   List<Map<String, dynamic>> _departements = [];
   List<Map<String, dynamic>> _postes = [];
@@ -51,7 +51,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   }
 
   Future<void> _loadDepartementsAndPostes() async {
-    setState(() => _isLoading = true);
+    setState(() => isLoading = true);
     try {
       final departements = await Supabase.instance.client
           .from('departement')
@@ -79,7 +79,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         SnackBar(content: Text('Erreur de chargement des données: $e')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      setState(() => isLoading = false);
     }
   }
 
@@ -124,14 +124,14 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   Future<void> _createEmployee() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() => isLoading = true);
 
 
     if (_selectedPoste == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Veuillez sélectionner un poste.')),
       );
-      setState(() => _isLoading = false);
+      setState(() => isLoading = false);
       return;
     }
     try {
@@ -173,7 +173,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('ID du poste est manquant.')),
         );
-        setState(() => _isLoading = false);
+        setState(() => isLoading = false);
         return;
       }
       await Supabase.instance.client.from('user').insert(userData);
@@ -195,7 +195,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
       );
 
     } finally {
-      setState(() => _isLoading = false);
+      setState(() => isLoading = false);
     }
   }
 
@@ -292,7 +292,14 @@ class _CreateEmployeeState extends State<CreateEmployee> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
       ),
-      body: SingleChildScrollView(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator(
+        strokeWidth: 3,
+        valueColor: AlwaysStoppedAnimation<Color>(
+          Colors.blue,
+        ),
+      ))
+          : SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 20),
         child: Form(
           key: _formKey,
@@ -408,7 +415,7 @@ class _CreateEmployeeState extends State<CreateEmployee> {
   }) {
     return TextFormField(
       controller: controller,
-      cursorColor: Colors.black,
+      cursorColor: Colors.blue,
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,

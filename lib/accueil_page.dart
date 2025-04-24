@@ -2,19 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:projets/presence_page.dart';
+import 'package:projets/profil.dart';
 import 'package:projets/utilisateur.dart';
 import 'package:projets/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin_page.dart';
 import 'package:intl/intl.dart';
 import 'connect_admin.dart';
+import 'connect_page.dart';
 import 'constants.dart';
 import 'menu_bouton.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'user.dart';
 
-class Accueil extends StatelessWidget {
+class Accueil extends StatefulWidget {
+  @override
+  AccueilState createState() => AccueilState();
+}
+
+class AccueilState extends State<Accueil> {
+  bool isLoading = false;
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,56 +39,75 @@ class Accueil extends StatelessWidget {
               backgroundColor: Colors.white,
               backgroundImage: AssetImage('assets/images/logo1.png'),
             ),
-            Container(
-              clipBehavior: Clip.none,
-              child: MenuButton(
-                icon: Icons.login,
-                text: "Marquer arrivée",
-                onTap:
-                    () =>
-                    _verifierPositionEtMarquerDepart(context, estArrivee: true),
-              ),
+            LoadingMenuButton(
+              icon: Icons.login,
+              text: "Marquer arrivée",
+              onPressed: () async {
+                await _verifierPositionEtMarquerDepart(context, estArrivee: true);
+              },
             ),
-            
-            MenuButton(
+
+
+            LoadingMenuButton(
               icon: Icons.logout,
               text: "Marquer départ",
-              onTap:
-                  () => _verifierPositionEtMarquerDepart(
-                context,
-                estArrivee: false,
-              ),
+              onPressed: () async {
+                await _verifierPositionEtMarquerDepart(context, estArrivee: false);
+              },
             ),
-            MenuButton(
+
+
+            LoadingMenuButton(
               icon: Icons.dashboard,
               text: "Consulter tableau de bord personnel",
-              onTap: () {
-                Navigator.push(
+              onPressed: () async {
+
+                await  Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => PresenceUser()),
                 );
+
               },
             ),
-            MenuButton(
+
+            LoadingMenuButton(
+              icon: Icons.person,
+              text: "Profil",
+              onPressed: () async {
+
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilEmploye()),
+                );
+              },
+            ),
+
+         LoadingMenuButton(
               icon: Icons.analytics,
               text: "Consulter tableau de bord",
-              onTap: () {
-                Navigator.push(
+              onPressed: () async {
+
+               await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => AdminDashboard()),
                 );
               },
             ),
-            MenuButton(
+
+
+
+            LoadingMenuButton(
               icon: Icons.person,
               text: "Créer compte utilisateur",
-              onTap: () {
-                Navigator.push(
+              onPressed: () async {
+
+               await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => CreateEmployee()),
                 );
               },
             ),
+
 
           ],
         ),
@@ -96,7 +125,7 @@ class Accueil extends StatelessWidget {
       if (!status.isGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              padding: EdgeInsets.all(30),
+              padding: EdgeInsets.all(25),
               content: Text("Permission de localisation refusée",style: TextStyle(fontSize: 25),
               )
           ),
@@ -145,9 +174,12 @@ class Accueil extends StatelessWidget {
   }
 
   Future<void> marquerArrivee(BuildContext context) async {
+    setState(() => isLoading = true);
+
     DateTime now = DateTime.now();
     DateTime limite = DateTime(now.year, now.month, now.day, 8, 30);
     String heureArrivee = DateFormat('HH:mm').format(now);
+
 
 
     final authBox = Hive.box('authBox');
@@ -165,70 +197,97 @@ class Accueil extends StatelessWidget {
            await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          padding: EdgeInsets.all(30),
-          content: Text("Présence marquée avec succès à $heureArrivee",style: TextStyle(fontSize: 23),),
+          padding: EdgeInsets.all(25),
+          content: Text("Présence marquée avec succès à $heureArrivee",style: TextStyle(fontSize: 20),),
           backgroundColor: Colors.green,
         ),
       );
     } else {
-          showDialog(
+      showDialog(
         context: context,
         builder: (context) {
           TextEditingController motifController = TextEditingController();
-          return AlertDialog(
-            shadowColor: Colors.blue,
-            title: Text("Motif de retard"),
-            content: TextField(
-              cursorColor: Colors.blue,
-              controller: motifController,
-              decoration: InputDecoration(hintText: "Entrez votre motif",
+          bool isLoading = false;
 
-          enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.grey),
-              ),
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                shadowColor: Colors.blue,
+                title: Text("Motif de retard"),
+                content: TextField(
+                  cursorColor: Colors.blue,
+                  controller: motifController,
+                  decoration: InputDecoration(
+                    hintText: "Entrez votre motif",
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.blue),
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("Annuler", style: TextStyle(color: Colors.blue)),
+                  ),
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                      String motif = motifController.text.trim();
+                      if (motif.isNotEmpty) {
+                        setState(() => isLoading = true);
 
-          focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.blue),
-            ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Annuler", style: TextStyle(color: Colors.blue)),
-              ),
-              TextButton(
-                onPressed: () async {
-                  String motif = motifController.text.trim();
-                  if (motif.isNotEmpty) {
-                    Navigator.pop(context);
+                        final pointage = {
+                          'idemploye': user.id,
+                          'date_heure': now.toIso8601String(),
+                          'type': "Arrivee",
+                          'statut': 'En attente',
+                          'motif': motif,
+                        };
 
-                    final pointage = {
-                      'idemploye':user.id,
-                      'date_heure': now.toIso8601String(),
-                      'type': "Arrivee",
-                      'statut':'En attente',
-                      'motif':motifController.text,
-                    };
-                    Logger().i(pointage);
-                    await Supabase.instance.client.from('pointage').insert(pointage);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        padding: EdgeInsets.all(30),
-                        content: Text(
-                          "Présence marquée avec succès à $heureArrivee",style: TextStyle(fontSize: 23),
-                        ),
+                        Logger().i(pointage);
+
+                        await Supabase.instance.client
+                            .from('pointage')
+                            .insert(pointage);
+
+                        setState(() => isLoading = false);
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            padding: EdgeInsets.all(25),
+                            content: Text(
+                              "Présence marquée avec succès à $heureArrivee",
+                              style: TextStyle(fontSize: 20),
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+                    child: isLoading
+                        ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                       ),
-                    );
-                  }
-                },
-                child: Text("Envoyer", style: TextStyle(color: Colors.blue)),
-              ),
-            ],
+                    )
+                        : Text("Envoyer", style: TextStyle(color: Colors.blue)),
+                  ),
+                ],
+              );
+            },
           );
         },
       );
     }
+
   }
 
   Future<void> marquerDepart(BuildContext context) async {
@@ -251,8 +310,8 @@ class Accueil extends StatelessWidget {
       await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          padding: EdgeInsets.all(30),
-          content: Text("Départ marqué avec succès à $heureDepart",style: TextStyle(fontSize: 23),),
+          padding: EdgeInsets.all(25),
+          content: Text("Départ marqué avec succès à $heureDepart",style: TextStyle(fontSize: 20),),
           backgroundColor: Colors.green,
         ),
       );
@@ -261,59 +320,85 @@ class Accueil extends StatelessWidget {
         context: context,
         builder: (context) {
           TextEditingController raisonController = TextEditingController();
-          return AlertDialog(
-            shadowColor: Colors.blue,
-            title: Text("Motif d'heure supplémentaire"),
-            content: TextField(
-              cursorColor: Colors.blue,
-              controller: raisonController,
-              decoration: InputDecoration(hintText: "Entrez votre motif",
+          bool isLoading = false;
 
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                shadowColor: Colors.blue,
+                title: Text("Motif d'heure supplémentaire"),
+                content: TextField(
+                  cursorColor: Colors.blue,
+                  controller: raisonController,
+                  decoration: InputDecoration(
+                    hintText: "Entrez votre motif",
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.blue),
+                    ),
+                  ),
                 ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("Annuler", style: TextStyle(color: Colors.blue)),
+                  ),
+                  TextButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                      String motif = raisonController.text.trim();
+                      if (motif.isNotEmpty) {
+                        setState(() => isLoading = true);
 
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Annuler", style: TextStyle(color: Colors.blue)),
-              ),
-              TextButton(
-                onPressed: () async {
-                  String motif = raisonController.text.trim();
-                  if (motif.isNotEmpty) {
-                    Navigator.pop(context);
-                    final pointage = {
-                      'idemploye':user.id,
-                      'date_heure': now.toIso8601String(),
-                      'type': "Départ",
-                      'statut':'En attente',
-                      'raison':raisonController.text,
-                    };
-                    Logger().i(pointage);
-                    await Supabase.instance.client.from('pointage').insert(pointage);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        padding: EdgeInsets.all(30),
-                        content: Text(
-                          "Départ marqué avec succès : $motif",style: TextStyle(fontSize: 23),
-                        ),
+                        final pointage = {
+                          'idemploye': user.id,
+                          'date_heure': now.toIso8601String(),
+                          'type': "Départ",
+                          'statut': 'En attente',
+                          'raison': motif,
+                        };
+
+                        Logger().i(pointage);
+                        await Supabase.instance.client
+                            .from('pointage')
+                            .insert(pointage);
+
+                        setState(() => isLoading = false);
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            padding: EdgeInsets.all(25),
+                            content: Text(
+                              "Départ marqué avec succès : $motif",
+                              style: TextStyle(fontSize: 20),
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+                    child: isLoading
+                        ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                       ),
-                    );
-
-                  }
-                },
-                child: Text("Envoyer", style: TextStyle(color: Colors.blue)),
-              ),
-            ],
+                    )
+                        : Text("Envoyer", style: TextStyle(color: Colors.blue)),
+                  ),
+                ],
+              );
+            },
           );
         },
       );
+
     }
   }
 }
