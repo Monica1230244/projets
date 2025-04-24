@@ -45,8 +45,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _employees = response.map<Map<String, dynamic>>((record) {
         DateTime dateHeure = DateTime.parse(record['date_heure']);
         String date = DateFormat('dd MMMM yyyy', 'fr_FR').format(dateHeure);
-        String heureArrivee = record['type'] == 'Arrivee' ? DateFormat('HH:mm').format(dateHeure) : '';
-        String heureDepart = record['type'] == 'Départ' ? DateFormat('HH:mm').format(dateHeure) : '';
+        String heureArrivee = record['type'] == 'Arrivee' ? DateFormat("HH 'h' mm").format(dateHeure) : '';
+        String heureDepart = record['type'] == 'Départ' ? DateFormat("HH' h' mm").format(dateHeure) : '';
         final user = record['user'] as Map<String, dynamic>? ?? {};
         final nomComplet = '${user['prenom']} ${user['nom']}';
        String type = _determineStatus(record, dateHeure);
@@ -105,6 +105,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return 'Inconnu';
   }
 
+  String formatMinutesToHours(int totalMinutes) {
+    if (totalMinutes <= 0) return "0h00mn";
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return "${hours} h ${minutes.toString().padLeft(2, '0')} mn";
+  }
+
   static String _calculatePenalty(String arrivalTime) {
     final lateMinutes = _calculateLateMinutes(arrivalTime);
     return _calculatePenaltyFromMinutes(lateMinutes);
@@ -112,35 +119,61 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   static int _calculateLateMinutes(String arrivalTime) {
     if (arrivalTime.isEmpty) return 0;
-    final parts = arrivalTime.split(':');
+    final parts = arrivalTime.split('h');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);
     return (hour - 8) * 60 + (minute - 30);
   }
 
-  static String _calculatePenaltyFromMinutes(int lateMinutes) {
-    if (lateMinutes <= 0) {
-      return 'Aucune sanction';
-    } else if (lateMinutes < 10) {
-      return 'Avertissement (retard de $lateMinutes min)';
-    } else if (lateMinutes < 20) {
-      return '5.000 F (retard de $lateMinutes min)';
-    } else if (lateMinutes < 30) {
-      return '10.000 F (retard de $lateMinutes min)';
-    } else if (lateMinutes < 40) {
-      return '15.000 F (retard de $lateMinutes min)';
-    } else if (lateMinutes < 50) {
-      return '20.000 F (retard de $lateMinutes min)';
-    } else if (lateMinutes < 60) {
-      return '25.000 F (retard de $lateMinutes min)';
-    } else {
-      return '30.000 F (retard de $lateMinutes min)';
-    }
+  static String _formatTotalPenalty(int amount) {
+    if (amount <= 0) return '0 F';
+    return NumberFormat.currency(
+      symbol: 'F',
+      decimalDigits: 0,
+      locale: 'fr_FR',
+    ).format(amount).replaceAll(' ', ' ');
   }
+
+    static String _calculatePenaltyFromMinutes(int lateMinutes) {
+      if (lateMinutes <= 0) {
+        return 'Aucune sanction';
+      }
+      // Calcul du nombre de tranches de 10 minutes  .ceil() arrondi en entier le  plus proche
+      final tranches = (lateMinutes / 10).ceil();
+
+      // Détermination du type de sanction
+      String sanctionType;
+      if (tranches == 1) {
+        sanctionType = 'Avertissement';
+      } else {
+        // Calcul de la pénalité (5.000 F par tranche au-delà de la première)
+        final penalty = (tranches - 1) * 5000;
+
+        //NumberFormat.currency est une classe dans la bibliothèque intl de Dart qui permet de formater les nombres en une représentation monétaire
+
+        sanctionType = NumberFormat.currency(
+          decimalDigits: 0,
+          symbol: '',
+          customPattern: '#,##0 F',//  Permet de faire un format personnalisé avec un symbole après le nombre
+
+        ).format(penalty);
+      }
+
+      return '$sanctionType ';
+    }
+
+
+//  pour calculer le montant total de la pénalité
+  static int _calculatePenaltyAmount(int lateMinutes) {
+    if (lateMinutes <= 0) return 0;
+    final tranches = (lateMinutes / 10).ceil();
+    return tranches > 1 ? (tranches - 1) * 5000 : 0;
+  }
+
 
   String _calculateHeuresSupp(String departure) {
     if (departure.isEmpty) return '';
-    final time = departure.split(':');
+    final time = departure.split('h');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
     final suppMinutes = (hour - 18) * 60 + (minute - 30);
@@ -149,7 +182,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   bool _isLate(String? arrival) {
     if (arrival == null || arrival.isEmpty) return false;
-    final time = arrival.split(':');
+    final time = arrival.split('h');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
     return hour > 8 || (hour == 8 && minute > 30);
@@ -157,7 +190,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   bool _isOvertime(String? departure) {
     if (departure == null || departure.isEmpty) return false;
-    final time = departure.split(':');
+    final time = departure.split('h');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
     return hour > 18 || (hour == 18 && minute > 30);
@@ -348,12 +381,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   List<Map<String, dynamic>> get filteredEmployees {
-    return _employees.where((emp) {
+    var filtered = _employees.where((emp)   {
       bool matchesStatus = true;
 
       switch (_selectedFilter) {
         case 'Arrivée':
           matchesStatus = emp['type'] == 'Arrivée';
+
           break;
         case 'Départ':
           matchesStatus = emp['type'] == 'Départ';
@@ -385,7 +419,38 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
       return matchesStatus && nameMatch && dateMatch;
     }).toList();
+
+  // Calcul des pénalités totales par personne
+    if (_selectedFilter == 'Pénalité') {
+      final Map<String, Map<String, dynamic>> employeePenalties = {};
+
+      for (var emp in filtered) {
+        final String employeeId = emp['id'].toString();
+        final int lateMinutes = _calculateLateMinutes(emp['arrival']);
+        final int penaltyAmount = _calculatePenaltyAmount(lateMinutes);
+
+        if (employeePenalties.containsKey(employeeId)) {
+          employeePenalties[employeeId]!['total'] += penaltyAmount;
+
+        } else {
+          employeePenalties[employeeId] = {
+            ...emp,
+
+            'total': penaltyAmount,
+            'type': 'Pénalité',
+            'date': '',
+            'arrival': '', // Masquer l'heure d'arrivée
+            'departure': '', // Masquer l'heure de départ
+          };
+        }
+      }
+      return employeePenalties.values.toList();
+    }
+    return filtered;
   }
+
+
+
 
   void _showAddAbsenceDialog() {
     showDialog(
@@ -436,7 +501,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          title: Text('Validation ${employee['nom']}'),
+          title: Text('Validation du statut de  ${employee['nom']}'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -456,8 +521,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 if (hasLate) ...[
                   const Text('DÉTAILS RETARD',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text('Arrivé à ${employee['arrival']} (Normal: 08:30)'),
-                  Text('Retard: $lateMinutes min'),
+                  Text('Arrivé à ${employee['arrival']} (Normal: 08h30)'),
+                  Text('Retard: ${formatMinutesToHours(lateMinutes)}'),
                   Text('Sanction: ${_calculatePenaltyFromMinutes(lateMinutes)}',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
@@ -614,6 +679,7 @@ Logger().i(idpointage);
                   final hasOvertime = _isOvertime(employee['departure']);
                   final isAbsent = _isAbsent(employee);
                   final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
+
                   return Card(
                     color: Colors.white,
                     margin: const EdgeInsets.all(5),
@@ -631,16 +697,35 @@ Logger().i(idpointage);
                               color: Colors.black)),
                           Text('Date: ${employee['date']}', style: const TextStyle(
                               color: Colors.black)),
+                          if(employee['type'] == "Arrivée" )
+                            Text('Arrivé à ${employee['arrival']} ',style: const TextStyle(
+                      color: Colors.black)),
+
+                          if(employee['type'] == "Départ")
+                            Text('Départ  à ${employee['departure']} ',style: const TextStyle(
+                                color: Colors.black)),
+
                           if (hasLate && _selectedIndex != 4)
-                            Text('Retard: $lateMinutes min', style: const TextStyle(
+                            Text('Retard: ${formatMinutesToHours(lateMinutes)}', style: const TextStyle(
                                 color: Colors.black)),
                           if (hasLate && _selectedIndex == 4)
-                            Text('Pénalité: ${_calculatePenaltyFromMinutes(lateMinutes)}',
+
+                            if (_selectedFilter == 'Pénalité') ...[
+                              const SizedBox(height: 5),
+                              Text(
+                                'Pénalité totale: ${NumberFormat.currency(symbol: '', decimalDigits: 0).format(employee['total'])} F',
                                 style: const TextStyle(
-                                    color: Colors.black)),
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red,
+                                    fontSize: 14
+                                ),
+                              ),
+                            ]
+                          else
                           if (hasOvertime)
                             Text('Heures supp: ${employee['heuresSupp']}', style: const TextStyle(
                                 color: Colors.black)),
+
                           if (isAbsent && employee['absenceMotif'] != null)
                             Text('Motif: ${employee['absenceMotif']}',
                                 style: const TextStyle(fontStyle: FontStyle.italic)),
