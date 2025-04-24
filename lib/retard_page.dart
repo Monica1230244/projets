@@ -193,7 +193,36 @@ class _RetardPageState extends State<RetardPage> {
                 final retard = presences[index];
                 final dateHeure = DateTime.parse(retard['date_heure']);
                 final minutesRetard = calculerMinutesRetard(dateHeure);
+                final hasRetard = minutesRetard > 0;
                 final penalite = (minutesRetard ~/ 10) * penalitePar10Min;
+
+
+                IconData statusIcon;
+                Color statusColor;
+                String statusText;
+
+                switch (retard['status']) {
+                  case "Validé":
+                    statusIcon = Icons.check_circle;
+                    statusColor = Colors.green;
+                    statusText = "Validé";
+                    break;
+                  case "Rejeté":
+                    statusIcon = Icons.cancel;
+                    statusColor = Colors.red;
+                    statusText = "Rejeté";
+                    break;
+                  case "En attente":
+                    statusIcon = Icons.hourglass_empty;
+                    statusColor = Colors.orangeAccent;
+                    statusText = "En attente";
+                    break;
+                  default:
+                    statusIcon = Icons.help;
+                    statusColor = Colors.grey;
+                    statusText = "";
+                    break;
+                }
 
                 return Card(
                   color: Colors.white,
@@ -217,8 +246,8 @@ class _RetardPageState extends State<RetardPage> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(
-                              Icons.access_time,
-                              color: Colors.deepOrange,
+                              statusIcon,
+                              color: statusColor,
                               size: 20,
                             ),
                           ),
@@ -231,13 +260,22 @@ class _RetardPageState extends State<RetardPage> {
                                   dateHeure.toLocal().toString().split(' ')[0],
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurple,
+                                    fontSize: 20,
+                                    color: Color(0xFF2B9BD7),
                                   ),
                                 ),
                                 SizedBox(height: 4),
                                 Text(
                                   'Arrivée: ${dateHeure.hour.toString().padLeft(2, '0')}:${dateHeure.minute.toString().padLeft(2, '0')} (Retard: ${minutesRetard} min)',
                                 ),
+                                if (hasRetard) SizedBox(height: 2),
+                                if (hasRetard)
+                                  SizedBox(height: 4),
+                                if (retard['motif']!.isNotEmpty)
+                                  Text(
+                                    'Motif de retard : ${retard['motif']}',
+                                    style: TextStyle(color:  Colors.black),
+                                  ),
                                 SizedBox(height: 6),
                                 Text(
                                   'Pénalité: $penalite FCFA',
@@ -246,9 +284,23 @@ class _RetardPageState extends State<RetardPage> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                if (retard['motif']!.isNotEmpty)
+                                  SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(statusIcon, color: statusColor, size: 16),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Status: $statusText',
+                                      style: TextStyle(color: statusColor),
+                                    ),
+                                  ],
+                                ),
                               ],
+
                             ),
                           ),
+
                         ],
                       ),
                     ),

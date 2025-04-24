@@ -35,7 +35,7 @@ class _PresenceUserState extends State<PresenceUser> {
     initializeDateFormatting('fr_FR', null);
      final DateTime now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, 1);
-    _selectedEndDate = DateTime(now.year, now.month + 1, 0);
+    _selectedEndDate = DateTime.now();
     _loadDataFromSupabase();
   }
 
@@ -43,7 +43,7 @@ class _PresenceUserState extends State<PresenceUser> {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: isStart ? _selectedDate : _selectedEndDate,
-      firstDate: DateTime(2000),
+      firstDate: DateTime(2025),
       lastDate: DateTime(2100),
       locale: const Locale('fr', 'FR'),
 
@@ -144,8 +144,30 @@ Logger().d(response);
         }
       });
 
-      int totalJoursCalcul = _selectedEndDate.difference(_selectedDate).inDays + 1;
+      // les  jours fériés
+      final List<DateTime> joursFeries = [
+        DateTime(_selectedDate.year, 1, 1), // Nouvel an
+        DateTime(_selectedDate.year, 5, 1), // Fête du travail
+        DateTime(_selectedDate.year, 8, 15), // Assomption
+        DateTime(_selectedDate.year, 12, 25), // Noël
+      ];
+
+     // permet de calculer les jours ouvrables
+      List<DateTime> joursOuvrables = [];
+
+      for (int i = 0; i <= _selectedEndDate.difference(_selectedDate).inDays; i++) {
+        DateTime jour = _selectedDate.add(Duration(days: i));
+        bool estWeekend = jour.weekday == DateTime.saturday || jour.weekday == DateTime.sunday;
+        bool estFerie = joursFeries.any((ferie) => ferie.year == jour.year && ferie.month == jour.month && ferie.day == jour.day);
+
+        if (!estWeekend && !estFerie) {
+          joursOuvrables.add(jour);
+        }
+      }
+
+      int totalJoursCalcul = joursOuvrables.length;
       int absences = totalJoursCalcul - presence;
+
 
       //  Appel au service pour calculer la pénalité
       final penaliteRetards = await RetardService.calculerPenaliteTotale(start, end);

@@ -6,9 +6,8 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:projets/connect_page.dart';
 import 'package:projets/utilisateur.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'accueil_page.dart';
-import 'connect_admin.dart';
+import 'package:projets/accueil_page.dart';
+import 'package:projets/connect_admin.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,10 +20,11 @@ Future<void> main() async {
   );
 
   await Hive.initFlutter();
-  Hive.registerAdapter(UsersAdapter());
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(UsersAdapter());
+  }
   await Hive.openBox('authBox');
   await Hive.openBox('users');
-
 
   runApp(const MyApp());
 }
@@ -37,6 +37,13 @@ class MyApp extends StatelessWidget {
     initializeDateFormatting('fr_FR', null);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        textSelectionTheme: const TextSelectionThemeData(
+          selectionColor: AppColor.backgroundForm, // Couleur de la sélection
+          selectionHandleColor: AppColor.backgroundForm, // Couleur des poignées
+          cursorColor: AppColor.backgroundForm, // Couleur du curseur
+        ),
+      ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -46,4 +53,8 @@ class MyApp extends StatelessWidget {
       home: Accueil(),
     );
   }
+}
+
+class AppColor {
+  static const Color backgroundForm = Color(0xFF2B9BD7);
 }
