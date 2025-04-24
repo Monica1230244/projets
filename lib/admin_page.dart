@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:projets/utilisateur.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -162,13 +164,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return '$sanctionType ';
     }
 
-
-//  pour calculer le montant total de la pénalité
+  //  pour calculer le montant total de la pénalité
   static int _calculatePenaltyAmount(int lateMinutes) {
     if (lateMinutes <= 0) return 0;
     final tranches = (lateMinutes / 10).ceil();
     return tranches > 1 ? (tranches - 1) * 5000 : 0;
   }
+
 
 
   String _calculateHeuresSupp(String departure) {
@@ -380,7 +382,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  List<Map<String, dynamic>> get filteredEmployees {
+  Future<List<Map<String, dynamic>>> get filteredEmployees async {
     var filtered = _employees.where((emp)   {
       bool matchesStatus = true;
 
@@ -420,7 +422,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return matchesStatus && nameMatch && dateMatch;
     }).toList();
 
-  // Calcul des pénalités totales par personne
+
+    // Calcul des pénalités totales par personne
     if (_selectedFilter == 'Pénalité') {
       final Map<String, Map<String, dynamic>> employeePenalties = {};
 
@@ -448,7 +451,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
     return filtered;
   }
-
 
 
 
@@ -664,83 +666,105 @@ Logger().i(idpointage);
             const SizedBox(height: 10),
             _buildFilterSection(),
             Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(
-                strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Colors.blue,
-                ),
-              ))
-                  : ListView.builder(
-                itemCount: filteredEmployees.length,
-                itemBuilder: (context, index) {
-                  final employee = filteredEmployees[index];
-                  final hasLate = _isLate(employee['arrival']);
-                  final hasOvertime = _isOvertime(employee['departure']);
-                  final isAbsent = _isAbsent(employee);
-                  final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
-
-                  return Card(
-                    color: Colors.white,
-                    margin: const EdgeInsets.all(5),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                          backgroundColor: Colors.white,
-                          child: Icon(employee['avatar'], color: Colors.blue)),
-                      title: Text(employee['nom'], style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Type: ${employee['type']}', style: const TextStyle(
-                              color: Colors.black)),
-                          Text('Date: ${employee['date']}', style: const TextStyle(
-                              color: Colors.black)),
-                          if(employee['type'] == "Arrivée" )
-                            Text('Arrivé à ${employee['arrival']} ',style: const TextStyle(
-                      color: Colors.black)),
-
-                          if(employee['type'] == "Départ")
-                            Text('Départ  à ${employee['departure']} ',style: const TextStyle(
-                                color: Colors.black)),
-
-                          if (hasLate && _selectedIndex != 4)
-                            Text('Retard: ${formatMinutesToHours(lateMinutes)}', style: const TextStyle(
-                                color: Colors.black)),
-                          if (hasLate && _selectedIndex == 4)
-
-                            if (_selectedFilter == 'Pénalité') ...[
-                              const SizedBox(height: 5),
-                              Text(
-                                'Pénalité totale: ${NumberFormat.currency(symbol: '', decimalDigits: 0).format(employee['total'])} F',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red,
-                                    fontSize: 14
-                                ),
-                              ),
-                            ]
-                          else
-                          if (hasOvertime)
-                            Text('Heures supp: ${employee['heuresSupp']}', style: const TextStyle(
-                                color: Colors.black)),
-
-                          if (isAbsent && employee['absenceMotif'] != null)
-                            Text('Motif: ${employee['absenceMotif']}',
-                                style: const TextStyle(fontStyle: FontStyle.italic)),
-                        ],
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: filteredEmployees, // Utilisez le Future ici
+                builder: (context, snapshot) {
+                  // Gérer les différents états du Future
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue), // Couleur bleue pour l'indicateur de chargement
                       ),
-                      trailing: (hasLate || hasOvertime || isAbsent)
-                          ? _buildStatusBadge(employee['statut'])
-                          : null,
-                      onTap: () {
-                        if (hasLate || hasOvertime || isAbsent) {
-                          _showValidationDialog(employee);
-                        }
+                    );
+                  } else if (snapshot.hasError) {
+                    Logger().i(snapshot);
+                    return Center(
+                      child: Text('Erreur: ${snapshot.error}'),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Text('Aucun employé trouvé'),
+                    );
+                  } else {
+                    // Les données sont disponibles
+                    final employees = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: employees.length,
+                      itemBuilder: (context, index) {
+                        final employee = employees[index];
+                        final hasLate = _isLate(employee['arrival']);
+                        final hasOvertime = _isOvertime(employee['departure']);
+                        final isAbsent = _isAbsent(employee);
+                        final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
+
+                        return Card(
+                          color: Colors.white,
+                          margin: const EdgeInsets.all(5),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Icon(employee['avatar'], color: Colors.blue), // Couleur bleue pour l'icône
+                            ),
+                            title: Text(employee['nom'], style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            )),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Type: ${employee['type']}', style: const TextStyle(
+                                  color: Colors.black,
+                                )),
+                                Text('Date: ${employee['date']}', style: const TextStyle(
+                                  color: Colors.black,
+                                )),
+                                if (employee['type'] == "Arrivée" )
+                                  Text('Arrivé à ${employee['arrival']}', style: const TextStyle(
+                                    color: Colors.black,
+                                  )),
+                                if (employee['type'] == "Départ" )
+                                  Text('Départ à ${employee['departure']}', style: const TextStyle(
+                                    color: Colors.black,
+                                  )),
+                                if (hasLate && _selectedIndex != 4)
+                                  Text('Retard: ${formatMinutesToHours(lateMinutes)}', style: const TextStyle(
+                                    color: Colors.black,
+                                  )),
+                                  if (_selectedFilter == 'Pénalité') ...[
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      'Pénalité totale: ${(employee['total'])} F',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ] else
+                                    if (hasOvertime)
+                                      Text('Heures supp: ${employee['heuresSupp']}', style: const TextStyle(
+                                        color: Colors.black,
+                                      )),
+                                if (isAbsent && employee['absenceMotif'] != null)
+                                  Text('Motif: ${employee['absenceMotif']}',
+                                    style: const TextStyle(fontStyle: FontStyle.italic),
+                                  ),
+                              ],
+                            ),
+                            trailing: (hasLate || hasOvertime || isAbsent)
+                                ? _buildStatusBadge(employee['statut'])
+                                : null,
+                            onTap: () {
+                              if (hasLate || hasOvertime || isAbsent) {
+                                _showValidationDialog(employee);
+                              }
+                            },
+                          ),
+                        );
                       },
-                    ),
-                  );
+                    );
+                  }
                 },
               ),
             ),
@@ -749,6 +773,7 @@ Logger().i(idpointage);
       ),
     );
   }
+
 
   Widget _buildStatusBadge(String status) {
     switch (status) {
