@@ -50,11 +50,10 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('fr', 'FR')],
-      home: Accueil(),
+      home: ConnectPage(),
     );
   }
 }
-
 class AppColor {
   static const Color backgroundForm = Color(0xFF2B9BD7);
 }
