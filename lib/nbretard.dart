@@ -123,11 +123,11 @@ class _Top10RetardsPageState extends State<Top10RetardsPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Top 10 des retards'),
+        title: Text('Top 10 des retards',style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),),
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month,color: Colors.blue,),
+            icon: Icon(Icons.calendar_month,color: Colors.black26,),
             onPressed: _selectMonth,
             tooltip: "Changer de mois",
           ),
