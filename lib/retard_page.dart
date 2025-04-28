@@ -65,6 +65,12 @@ class _RetardPageState extends State<RetardPage> {
       print('Erreur lors du chargement des retards : $e');
     }
   }
+  String formatMinutesToHours(int totalMinutes) {
+    if (totalMinutes <= 0) return "0h00mn";
+    final heureArrivee = totalMinutes ~/ 60;
+    final minuteArrivee = totalMinutes % 60;
+    return "${heureArrivee} h ${minuteArrivee.toString().padLeft(2, '0')} mn";
+  }
 
   int calculerMinutesRetard(DateTime dateHeure) {
     final heureArrivee = dateHeure.hour;

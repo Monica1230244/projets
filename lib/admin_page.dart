@@ -114,10 +114,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return "${hours} h ${minutes.toString().padLeft(2, '0')} mn";
   }
 
-  static String _calculatePenalty(String arrivalTime) {
-    final lateMinutes = _calculateLateMinutes(arrivalTime);
-    return _calculatePenaltyFromMinutes(lateMinutes);
-  }
 
   static int _calculateLateMinutes(String arrivalTime) {
     if (arrivalTime.isEmpty) return 0;
@@ -127,14 +123,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return (hour - 8) * 60 + (minute - 30);
   }
 
-  static String _formatTotalPenalty(int amount) {
-    if (amount <= 0) return '0 F';
-    return NumberFormat.currency(
-      symbol: 'F',
-      decimalDigits: 0,
-      locale: 'fr_FR',
-    ).format(amount).replaceAll(' ', ' ');
-  }
+
 
     static String _calculatePenaltyFromMinutes(int lateMinutes) {
       if (lateMinutes <= 0) {
@@ -383,13 +372,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Future<List<Map<String, dynamic>>> get filteredEmployees async {
-    var filtered = _employees.where((emp)   {
+    if (_selectedFilter == 'Absents') {
+      // Appeler la méthode pour récupérer les absences de tous les utilisateurs
+      return await _getAllAbsences();
+    }
+
+    var filtered = _employees.where((emp) {
       bool matchesStatus = true;
 
       switch (_selectedFilter) {
         case 'Arrivée':
           matchesStatus = emp['type'] == 'Arrivée';
-
           break;
         case 'Départ':
           matchesStatus = emp['type'] == 'Départ';
@@ -403,9 +396,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
         case 'Pénalité':
           matchesStatus = _isLate(emp['arrival']);
           break;
-
         case 'Absents':
-          matchesStatus = emp['type'] == 'Absent';
+        // Cette condition est gérée séparément en haut
           break;
       }
 
@@ -422,7 +414,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return matchesStatus && nameMatch && dateMatch;
     }).toList();
 
-
     // Calcul des pénalités totales par personne
     if (_selectedFilter == 'Pénalité') {
       final Map<String, Map<String, dynamic>> employeePenalties = {};
@@ -434,11 +425,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
         if (employeePenalties.containsKey(employeeId)) {
           employeePenalties[employeeId]!['total'] += penaltyAmount;
-
         } else {
           employeePenalties[employeeId] = {
             ...emp,
-
             'total': penaltyAmount,
             'type': 'Pénalité',
             'date': '',
@@ -449,12 +438,84 @@ class _AdminDashboardState extends State<AdminDashboard> {
       }
       return employeePenalties.values.toList();
     }
+
     return filtered;
+  }
+
+  Future<List<Map<String, dynamic>>> _getAllAbsences() async {
+    try {
+      // Récupérer tous les utilisateurs
+      final responseUsers = await Supabase.instance.client
+          .from('user')
+          .select('id, nom, prenom');
+
+      if (responseUsers.isEmpty) {
+        throw Exception('Aucun utilisateur trouvé');
+      }
+
+      final users = List<Map<String, dynamic>>.from(responseUsers);
+      final today = DateTime.now();
+      final debutMois = DateTime(today.year, today.month, 1);
+      final List<Map<String, dynamic>> absencesList = [];
+
+      for (final user in users) {
+        final userId = user['id'];
+        final userName = '${user['prenom']} ${user['nom']}';
+
+        // Récupérer les jours de présence dans Supabase pour cet utilisateur
+        final response = await Supabase.instance.client
+            .from('pointage')
+            .select('date_heure')
+            .eq('idemploye', userId)
+            .gte('date_heure', debutMois.toIso8601String())
+            .lte('date_heure', today.toIso8601String());
+
+        final pointages = List<Map<String, dynamic>>.from(response);
+
+        // Jours où l'employé a pointé (au format yyyy-MM-dd)
+        final joursPointes = pointages.map((e) {
+          final date = DateTime.parse(e['date_heure']).toLocal();
+          return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        }).toSet();
+
+        // Générer toutes les dates ouvrables (sans samedi/dimanche)
+        List<String> toutesLesDates = [];
+        for (DateTime d = debutMois;
+        d.isBefore(today) || d.isAtSameMomentAs(today);
+        d = d.add(Duration(days: 1))) {
+          if (d.weekday != DateTime.saturday && d.weekday != DateTime.sunday) {
+            final dateStr = "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+            toutesLesDates.add(dateStr);
+          }
+        }
+
+        // Absences = jours ouvrables sans pointage
+        final joursAbsents = toutesLesDates.where((date) => !joursPointes.contains(date)).toList();
+
+        // Ajouter les absences à la liste
+        for (final jourAbsent in joursAbsents) {
+          absencesList.add({
+
+            'nom': userName,
+            'type': 'Absent',
+            'date': jourAbsent,
+            'arrival': '', // Masquer l'heure d'arrivée
+            'departure': '', // Masquer l'heure de départ
+          });
+        }
+      }
+
+      return absencesList;
+    } catch (e) {
+      print("Erreur lors du chargement des absences : $e");
+      return [];
+    }
   }
 
 
 
-  void _showAddAbsenceDialog() {
+
+  /*void _showAddAbsenceDialog() {
     showDialog(
       context: context,
       builder: (context) {
@@ -491,11 +552,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       },
     );
   }
-
+*/
   void _showValidationDialog(Map<String, dynamic> employee) {
     final hasLate = _isLate(employee['arrival']);
     final hasOvertime = _isOvertime(employee['departure']);
-    final isAbsent = _isAbsent(employee);
+    //final isAbsent = _isAbsent(employee);
     final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
 
     showDialog(
@@ -509,7 +570,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isAbsent) ...[
+               /*if (isAbsent) ...[
                   const Text('DÉTAILS ABSENCE',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
                   Text('Date: ${employee['date']}'),
@@ -520,6 +581,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       style: const TextStyle(fontStyle: FontStyle.italic)),
                   const Divider(height: 30),
                 ],
+
+                */
                 if (hasLate) ...[
                   const Text('DÉTAILS RETARD',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
@@ -616,6 +679,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     required String idpointage,
   }) async {
     try {
+
       final supabase = Supabase.instance.client;
       Logger().i(employeeId);
 
@@ -677,16 +741,7 @@ Logger().i(idpointage);
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.blue), // Couleur bleue pour l'indicateur de chargement
                       ),
                     );
-                  } else if (snapshot.hasError) {
-                    Logger().i(snapshot);
-                    return Center(
-                      child: Text('Erreur: ${snapshot.error}'),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Text('Aucun employé trouvé'),
-                    );
-                  } else {
+                  }
                     // Les données sont disponibles
                     final employees = snapshot.data!;
                     return ListView.builder(
@@ -746,10 +801,13 @@ Logger().i(idpointage);
                                       Text('Heures supp: ${employee['heuresSupp']}', style: const TextStyle(
                                         color: Colors.black,
                                       )),
-                                if (isAbsent && employee['absenceMotif'] != null)
-                                  Text('Motif: ${employee['absenceMotif']}',
-                                    style: const TextStyle(fontStyle: FontStyle.italic),
-                                  ),
+
+                                if (_selectedFilter == 'Absent') ...[
+                                  const SizedBox(height: 5),
+                                    Text('Date: ${employee['date']  }', style: const TextStyle(
+                                    color: Colors.black,
+                                    )),
+                                ],
                               ],
                             ),
                             trailing: (hasLate || hasOvertime || isAbsent)
@@ -765,7 +823,7 @@ Logger().i(idpointage);
                       },
                     );
                   }
-                },
+
               ),
             ),
           ],
