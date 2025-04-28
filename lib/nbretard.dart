@@ -127,7 +127,7 @@ class _Top10RetardsPageState extends State<Top10RetardsPage> {
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month,color: Colors.black12,),
+            icon: Icon(Icons.calendar_month,color: Colors.black38,),
             onPressed: _selectMonth,
             tooltip: "Changer de mois",
           ),
@@ -162,7 +162,7 @@ class _Top10RetardsPageState extends State<Top10RetardsPage> {
                   child: ListTile(
                     leading: CircleAvatar(
                       child: Text('${index + 1}',style: TextStyle(color: Colors.black),),
-                      backgroundColor: Colors.black12,
+                      backgroundColor: Colors.black26,
                     ),
                     title: Text(
                       '${employe['prenom']} ${employe['nom']}',

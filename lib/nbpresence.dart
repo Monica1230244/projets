@@ -123,7 +123,7 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month,color: Colors.black12,),
+            icon: Icon(Icons.calendar_month,color: Colors.black38),
             onPressed: _selectMonth,
             tooltip: "Changer de mois",
           ),
