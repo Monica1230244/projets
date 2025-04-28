@@ -37,7 +37,6 @@ class _RetardPageState extends State<RetardPage> {
 
       final tousLesPointages = List<Map<String, dynamic>>.from(response);
 
-      // Garder uniquement les retards du matin
       final retards = tousLesPointages.where((pointage) {
         final dateHeureStr = pointage['date_heure'];
         if (dateHeureStr == null) return false;
@@ -46,13 +45,11 @@ class _RetardPageState extends State<RetardPage> {
         final h = dateHeure.hour;
         final m = dateHeure.minute;
 
-
         final estApres0830 = (h > 8) || (h == 8 && m > 30);
         final estAvantMidi = h < 12;
 
         return estApres0830 && estAvantMidi;
       }).toList();
-
 
       setState(() {
         presences = retards;
@@ -65,11 +62,12 @@ class _RetardPageState extends State<RetardPage> {
       print('Erreur lors du chargement des retards : $e');
     }
   }
+
   String formatMinutesToHours(int totalMinutes) {
     if (totalMinutes <= 0) return "0h00mn";
     final heureArrivee = totalMinutes ~/ 60;
     final minuteArrivee = totalMinutes % 60;
-    return "${heureArrivee} h ${minuteArrivee.toString().padLeft(2, '0')} mn";
+    return "${heureArrivee} h ${minuteArrivee.toString().padLeft(2, '0')} min";
   }
 
   int calculerMinutesRetard(DateTime dateHeure) {
@@ -113,12 +111,14 @@ class _RetardPageState extends State<RetardPage> {
         backgroundColor: Colors.white,
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator(
-        strokeWidth: 3,
-        valueColor: AlwaysStoppedAnimation<Color>(
-          Colors.blue,
+          ? Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 3,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            Colors.blue,
+          ),
         ),
-      ))
+      )
           : Column(
         children: [
           Padding(
@@ -150,7 +150,7 @@ class _RetardPageState extends State<RetardPage> {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      '$totalMinutesRetard minutes',
+                      formatMinutesToHours(totalMinutesRetard),
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -202,12 +202,12 @@ class _RetardPageState extends State<RetardPage> {
                 final hasRetard = minutesRetard > 0;
                 final penalite = (minutesRetard ~/ 10) * penalitePar10Min;
 
-
                 IconData statusIcon;
                 Color statusColor;
                 String statusText;
 
-                switch (retard['status']) {
+                // Correction ici : on utilise 'statut' et non 'status'
+                switch (retard['statut']) {
                   case "Validé":
                     statusIcon = Icons.check_circle;
                     statusColor = Colors.green;
@@ -226,7 +226,7 @@ class _RetardPageState extends State<RetardPage> {
                   default:
                     statusIcon = Icons.help;
                     statusColor = Colors.grey;
-                    statusText = "";
+                    statusText = "Non défini";
                     break;
                 }
 
@@ -274,13 +274,11 @@ class _RetardPageState extends State<RetardPage> {
                                 Text(
                                   'Arrivée: ${dateHeure.hour.toString().padLeft(2, '0')}:${dateHeure.minute.toString().padLeft(2, '0')} (Retard: ${minutesRetard} min)',
                                 ),
-                                if (hasRetard) SizedBox(height: 2),
-                                if (hasRetard)
-                                  SizedBox(height: 4),
-                                if (retard['motif']!.isNotEmpty)
+                                if (hasRetard) SizedBox(height: 4),
+                                if (retard['motif'] != null && retard['motif'].toString().isNotEmpty)
                                   Text(
                                     'Motif de retard : ${retard['motif']}',
-                                    style: TextStyle(color:  Colors.black),
+                                    style: TextStyle(color: Colors.black),
                                   ),
                                 SizedBox(height: 6),
                                 Text(
@@ -290,8 +288,7 @@ class _RetardPageState extends State<RetardPage> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                if (retard['motif']!.isNotEmpty)
-                                  SizedBox(height: 6),
+                                SizedBox(height: 6),
                                 Row(
                                   children: [
                                     Icon(statusIcon, color: statusColor, size: 16),
@@ -303,10 +300,8 @@ class _RetardPageState extends State<RetardPage> {
                                   ],
                                 ),
                               ],
-
                             ),
                           ),
-
                         ],
                       ),
                     ),
