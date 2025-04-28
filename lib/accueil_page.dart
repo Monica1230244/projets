@@ -14,6 +14,8 @@ import 'constants.dart';
 import 'menu_bouton.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'nbpresence.dart';
+import 'nbretard.dart';
 import 'user.dart';
 
 class Accueil extends StatefulWidget {
@@ -104,6 +106,30 @@ class AccueilState extends State<Accueil> {
                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => CreateEmployee()),
+                );
+              },
+            ),
+
+            LoadingMenuButton(
+              icon: Icons.person,
+              text: "Top 10 des présences",
+              onPressed: () async {
+
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Top10PresencesPage()),
+                );
+              },
+            ),
+
+            LoadingMenuButton(
+              icon: Icons.person,
+              text: "Top 10 des retards",
+              onPressed: () async {
+
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Top10RetardsPage()),
                 );
               },
             ),
