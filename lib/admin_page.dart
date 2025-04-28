@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:projets/utilisateur.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -21,67 +20,54 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final TextEditingController _rejectionController = TextEditingController();
   final TextEditingController _absenceMotifController = TextEditingController();
   String _selectedFilter = 'Tous';
-  final List<String> _filterOptions = ['Tous', 'Présents', 'Absents', 'Retards', 'Heures Supp','Pénalité'];
+  final List<String> _filterOptions = ['Tous', 'Arrivée','Départ', 'Absents', 'Retards', 'Heures Supp','Pénalité'];
   bool _isLoading = true;
   List<Map<String, dynamic>> _employees = [];
   final SupabaseClient _supabase = Supabase.instance.client;
-
 
   @override
   void initState() {
     super.initState();
     _fetchAllData();
-
   }
-
 
   Future<void> _fetchAllData() async {
     try {
-      setState(()  {
+      setState(() {
         _isLoading = true;
       });
-      // Récupérer les données
 
       final response = await _supabase
           .from('pointage')
-          .select(''' *,
-       
-          user(id,nom,prenom)
-        
-        ''')
+          .select(''' *, user(id,nom,prenom) ''')
           .order('date_heure', ascending: false);
+
       Logger().i(response);
-
-
-
 
       _employees = response.map<Map<String, dynamic>>((record) {
         DateTime dateHeure = DateTime.parse(record['date_heure']);
         String date = DateFormat('dd MMMM yyyy', 'fr_FR').format(dateHeure);
-        String heureArrivee = record['type'] == 'Arrivee' ? DateFormat('HH:mm').format(dateHeure) : '';
-        String heureDepart = record['type'] == 'Départ' ? DateFormat('HH:mm').format(dateHeure) : '';
+        String heureArrivee = record['type'] == 'Arrivee' ? DateFormat("HH 'h' mm").format(dateHeure) : '';
+        String heureDepart = record['type'] == 'Départ' ? DateFormat("HH' h' mm").format(dateHeure) : '';
         final user = record['user'] as Map<String, dynamic>? ?? {};
         final nomComplet = '${user['prenom']} ${user['nom']}';
-        String status = _determineStatus(record, dateHeure);
-        String penalty = status == 'Retard' ? _calculatePenalty(heureArrivee) : '';
-        String heuresSupp = status == 'Heures Supp' ? _calculateHeuresSupp(heureDepart) : '';
+       String type = _determineStatus(record, dateHeure);
 
 
+            return {
 
-
-        return {
+          'id':record['idemploye'],
+              'idpointage':record['id'],
           'nom': nomComplet,
           'arrival': heureArrivee,
           'departure': heureDepart,
           'date': date,
-          'status': status,
+          'date_heure': dateHeure,
+          'type': type,
           'avatar': Icons.person,
           'lateMotif': record['motif'] ?? record['raison'] ?? '',
-          'overtimeMotif': record['motif'] ?? record['raison'] ?? '',
-          'validationStatus': 'En attente',
-          'penalty': penalty,
-          'heuresSupp': heuresSupp,
-          'absenceMotif': status == 'Absent' ? (record['motif'] ?? record['raison'] ?? '') : null,
+          'statut': record['statut'] ,
+
         };
       }).toList();
 
@@ -99,22 +85,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-
   String _determineStatus(Map<String, dynamic> record, DateTime dateHeure) {
     String type = record['type'] ?? '';
 
     if (type == 'Arrivee') {
       DateTime limiteArrivee = DateTime(dateHeure.year, dateHeure.month, dateHeure.day, 8, 30);
       if (dateHeure.isAfter(limiteArrivee)) {
-        return 'Retard';
+        return 'Arrivée';
       }
-      return 'Présent';
+      return 'Arrivée';
     } else if (type == 'Départ') {
       DateTime limiteDepart = DateTime(dateHeure.year, dateHeure.month, dateHeure.day, 18, 30);
       if (dateHeure.isAfter(limiteDepart)) {
         return 'Heures Supp';
       }
-      return 'Présent';
+      return 'Départ';
     } else if (type == 'Absence') {
       return 'Absent';
     }
@@ -122,40 +107,64 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return 'Inconnu';
   }
 
-  static String _calculatePenalty(String arrivalTime) {
-    final lateMinutes = _calculateLateMinutes(arrivalTime);
-    return _calculatePenaltyFromMinutes(lateMinutes);
+  String formatMinutesToHours(int totalMinutes) {
+    if (totalMinutes <= 0) return "0h00mn";
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return "${hours} h ${minutes.toString().padLeft(2, '0')} mn";
   }
 
+
   static int _calculateLateMinutes(String arrivalTime) {
-    final parts = arrivalTime.split(':');
+    if (arrivalTime.isEmpty) return 0;
+    final parts = arrivalTime.split('h');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);
     return (hour - 8) * 60 + (minute - 30);
   }
 
-  static String _calculatePenaltyFromMinutes(int lateMinutes) {
-    if (lateMinutes <= 0) {
-      return 'Aucune sanction';
-    } else if (lateMinutes < 10) {
-      return 'Avertissement (retard de $lateMinutes min)';
-    } else if (lateMinutes < 20) {
-      return '5000 F (retard de $lateMinutes min)';
-    } else if (lateMinutes < 30) {
-      return '10000 F (retard de $lateMinutes min)';
-    } else if (lateMinutes < 40) {
-      return '15000 F (retard de $lateMinutes min)';
-    } else if (lateMinutes < 50) {
-      return '20000 F (retard de $lateMinutes min)';
-    } else if (lateMinutes < 60) {
-      return '25000 F (retard de $lateMinutes min)';
-    } else {
-      return '30000 F (retard de $lateMinutes min)';
+
+
+    static String _calculatePenaltyFromMinutes(int lateMinutes) {
+      if (lateMinutes <= 0) {
+        return 'Aucune sanction';
+      }
+      // Calcul du nombre de tranches de 10 minutes  .ceil() arrondi en entier le  plus proche
+      final tranches = (lateMinutes / 10).ceil();
+
+      // Détermination du type de sanction
+      String sanctionType;
+      if (tranches == 1) {
+        sanctionType = 'Avertissement';
+      } else {
+        // Calcul de la pénalité (5.000 F par tranche au-delà de la première)
+        final penalty = (tranches - 1) * 5000;
+
+        //NumberFormat.currency est une classe dans la bibliothèque intl de Dart qui permet de formater les nombres en une représentation monétaire
+
+        sanctionType = NumberFormat.currency(
+          decimalDigits: 0,
+          symbol: '',
+          customPattern: '#,##0 F',//  Permet de faire un format personnalisé avec un symbole après le nombre
+
+        ).format(penalty);
+      }
+
+      return '$sanctionType ';
     }
+
+  //  pour calculer le montant total de la pénalité
+  static int _calculatePenaltyAmount(int lateMinutes) {
+    if (lateMinutes <= 0) return 0;
+    final tranches = (lateMinutes / 10).ceil();
+    return tranches > 1 ? (tranches - 1) * 5000 : 0;
   }
 
+
+
   String _calculateHeuresSupp(String departure) {
-    final time = departure.split(':');
+    if (departure.isEmpty) return '';
+    final time = departure.split('h');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
     final suppMinutes = (hour - 18) * 60 + (minute - 30);
@@ -163,17 +172,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   bool _isLate(String? arrival) {
-    if (arrival == null||arrival=="") return false;
-    final time = arrival.split(':');
+    if (arrival == null || arrival.isEmpty) return false;
+    final time = arrival.split('h');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
     return hour > 8 || (hour == 8 && minute > 30);
   }
 
   bool _isOvertime(String? departure) {
-    if (departure == null ||departure=="" ) return false;
-    final time = departure.split(':');
-
+    if (departure == null || departure.isEmpty) return false;
+    final time = departure.split('h');
     final hour = int.parse(time[0]);
     final minute = int.parse(time[1]);
     return hour > 18 || (hour == 18 && minute > 30);
@@ -199,7 +207,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Row(
             children: _filterOptions.map((option) {
               return Padding(
-                padding: EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.only(right: 10),
                 child: FilterChip(
                   label: Text(option),
                   selected: _selectedFilter == option,
@@ -219,7 +227,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             }).toList(),
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
       ],
     );
   }
@@ -244,20 +252,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
-
                 TextField(
                   controller: _filterController,
                   cursorColor: Colors.black,
                   decoration: InputDecoration(
                     labelText: 'Rechercher par nom',
-                    labelStyle: TextStyle(color:Color(0xFF000000) ),
+                    labelStyle: const TextStyle(color: Color(0xFF000000)),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFF000000))
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFF000000)),
+                      borderSide: const BorderSide(color: Color(0xFF000000)),
                     ),
                     prefixIcon: const Icon(Icons.search),
                   ),
@@ -322,7 +329,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 25),
                 Row(
                   children: [
@@ -337,7 +343,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             _selectedFilter = 'Tous';
                           });
                         },
-                        child: const Text('Annuler',style: TextStyle(color: Colors.black)),
+                        child: const Text('Annuler', style: TextStyle(color: Colors.black)),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -352,7 +358,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                        child: const Text('Appliquer',style: TextStyle(color: Colors.black),),
+                        child: const Text('Appliquer', style: TextStyle(color: Colors.black)),
                       ),
                     ),
                   ],
@@ -365,25 +371,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  List<Map<String, dynamic>> get filteredEmployees {
-    return _employees.where((emp) {
+  Future<List<Map<String, dynamic>>> get filteredEmployees async {
+    if (_selectedFilter == 'Absents') {
+      // Appeler la méthode pour récupérer les absences de tous les utilisateurs
+      return await _getAllAbsences();
+    }
+
+    var filtered = _employees.where((emp) {
       bool matchesStatus = true;
 
       switch (_selectedFilter) {
-        case 'Présents':
-          matchesStatus = emp['status'] == 'Présent';
+        case 'Arrivée':
+          matchesStatus = emp['type'] == 'Arrivée';
           break;
-        case 'Absents':
-          matchesStatus = emp['status'] == 'Absent';
+        case 'Départ':
+          matchesStatus = emp['type'] == 'Départ';
           break;
         case 'Retards':
-          matchesStatus = emp['status'].contains('Retard');
+          matchesStatus = _isLate(emp['arrival']);
           break;
         case 'Heures Supp':
-          matchesStatus = emp['status'].contains('Heures Supp');
+          matchesStatus = emp['type'].contains('Heures Supp');
           break;
         case 'Pénalité':
           matchesStatus = _isLate(emp['arrival']);
+          break;
+        case 'Absents':
+        // Cette condition est gérée séparément en haut
           break;
       }
 
@@ -392,15 +406,116 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
       bool dateMatch = true;
       if (_selectedDateRange != null) {
-        dateMatch = emp['date'].isAfter(_selectedDateRange!.start.subtract(const Duration(days: 1))) &&
-            emp['date'].isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
+        final empDate = DateFormat('dd MMMM yyyy', 'fr_FR').parse(emp['date']);
+        dateMatch = empDate.isAfter(_selectedDateRange!.start.subtract(const Duration(days: 1))) &&
+            empDate.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
       }
 
       return matchesStatus && nameMatch && dateMatch;
     }).toList();
+
+    // Calcul des pénalités totales par personne
+    if (_selectedFilter == 'Pénalité') {
+      final Map<String, Map<String, dynamic>> employeePenalties = {};
+
+      for (var emp in filtered) {
+        final String employeeId = emp['id'].toString();
+        final int lateMinutes = _calculateLateMinutes(emp['arrival']);
+        final int penaltyAmount = _calculatePenaltyAmount(lateMinutes);
+
+        if (employeePenalties.containsKey(employeeId)) {
+          employeePenalties[employeeId]!['total'] += penaltyAmount;
+        } else {
+          employeePenalties[employeeId] = {
+            ...emp,
+            'total': penaltyAmount,
+            'type': 'Pénalité',
+            'date': '',
+            'arrival': '', // Masquer l'heure d'arrivée
+            'departure': '', // Masquer l'heure de départ
+          };
+        }
+      }
+      return employeePenalties.values.toList();
+    }
+
+    return filtered;
   }
 
-  void _showAddAbsenceDialog() {
+  Future<List<Map<String, dynamic>>> _getAllAbsences() async {
+    try {
+      // Récupérer tous les utilisateurs
+      final responseUsers = await Supabase.instance.client
+          .from('user')
+          .select('id, nom, prenom');
+
+      if (responseUsers.isEmpty) {
+        throw Exception('Aucun utilisateur trouvé');
+      }
+
+      final users = List<Map<String, dynamic>>.from(responseUsers);
+      final today = DateTime.now();
+      final debutMois = DateTime(today.year, today.month, 1);
+      final List<Map<String, dynamic>> absencesList = [];
+
+      for (final user in users) {
+        final userId = user['id'];
+        final userName = '${user['prenom']} ${user['nom']}';
+
+        // Récupérer les jours de présence dans Supabase pour cet utilisateur
+        final response = await Supabase.instance.client
+            .from('pointage')
+            .select('date_heure')
+            .eq('idemploye', userId)
+            .gte('date_heure', debutMois.toIso8601String())
+            .lte('date_heure', today.toIso8601String());
+
+        final pointages = List<Map<String, dynamic>>.from(response);
+
+        // Jours où l'employé a pointé (au format yyyy-MM-dd)
+        final joursPointes = pointages.map((e) {
+          final date = DateTime.parse(e['date_heure']).toLocal();
+          return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        }).toSet();
+
+        // Générer toutes les dates ouvrables (sans samedi/dimanche)
+        List<String> toutesLesDates = [];
+        for (DateTime d = debutMois;
+        d.isBefore(today) || d.isAtSameMomentAs(today);
+        d = d.add(Duration(days: 1))) {
+          if (d.weekday != DateTime.saturday && d.weekday != DateTime.sunday) {
+            final dateStr = "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+            toutesLesDates.add(dateStr);
+          }
+        }
+
+        // Absences = jours ouvrables sans pointage
+        final joursAbsents = toutesLesDates.where((date) => !joursPointes.contains(date)).toList();
+
+        // Ajouter les absences à la liste
+        for (final jourAbsent in joursAbsents) {
+          absencesList.add({
+
+            'nom': userName,
+            'type': 'Absent',
+            'date': jourAbsent,
+            'arrival': '', // Masquer l'heure d'arrivée
+            'departure': '', // Masquer l'heure de départ
+          });
+        }
+      }
+
+      return absencesList;
+    } catch (e) {
+      print("Erreur lors du chargement des absences : $e");
+      return [];
+    }
+  }
+
+
+
+
+  /*void _showAddAbsenceDialog() {
     showDialog(
       context: context,
       builder: (context) {
@@ -437,11 +552,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       },
     );
   }
-
+*/
   void _showValidationDialog(Map<String, dynamic> employee) {
     final hasLate = _isLate(employee['arrival']);
     final hasOvertime = _isOvertime(employee['departure']);
-    final isAbsent = _isAbsent(employee);
+    //final isAbsent = _isAbsent(employee);
     final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
 
     showDialog(
@@ -449,16 +564,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          title: Text('Validation ${employee['name']}'),
+          title: Text('Validation du statut de  ${employee['nom']}'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isAbsent) ...[
+               /*if (isAbsent) ...[
                   const Text('DÉTAILS ABSENCE',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text('Date: ${DateFormat('dd/MM/yyyy').format(employee['date'])}'),
+                  Text('Date: ${employee['date']}'),
                   const SizedBox(height: 10),
                   const Text('Motif fourni:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -466,13 +581,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       style: const TextStyle(fontStyle: FontStyle.italic)),
                   const Divider(height: 30),
                 ],
+
+                */
                 if (hasLate) ...[
                   const Text('DÉTAILS RETARD',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text('Arrivé à ${employee['arrival']} (Normale: 08:30)'),
-                  Text('Retard: $lateMinutes min'),
+                  Text('Arrivé à ${employee['arrival']} (Normal: 08h30)'),
+                  Text('Retard: ${formatMinutesToHours(lateMinutes)}'),
                   Text('Sanction: ${_calculatePenaltyFromMinutes(lateMinutes)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.red,
                           fontSize: 16)),
@@ -487,7 +604,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   const Text('DÉTAILS HEURES SUPP',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
                   Text('Départ à ${employee['departure']} (Normale: 18:30)'),
-                  Text('Heures supplémentaires: ${_calculateHeuresSupp(employee['departure'])}'),
+                  Text('Heures supplémentaires: ${employee['heuresSupp']}'),
                   const SizedBox(height: 10),
                   const Text('Motif fourni:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -495,7 +612,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       style: const TextStyle(fontStyle: FontStyle.italic)),
                   const Divider(height: 30),
                 ],
-                if (employee['validationStatus'] == 'En attente') ...[
+                if (employee['statut'] == 'En attente') ...[
                   const Text('Commentaire :',
                       style: TextStyle(fontStyle: FontStyle.italic)),
                   TextField(
@@ -511,7 +628,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           actions: [
-            if (employee['validationStatus'] == 'En attente') ...[
+            if (employee['statut'] == 'En attente') ...[
               TextButton(
                 onPressed: () {
                   if (_rejectionController.text.isEmpty) {
@@ -519,30 +636,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SnackBar(content: Text('Veuillez saisir un motif de rejet')));
                     return;
                   }
-                  _updateStatus(employee, 'Rejeté', _rejectionController.text);
+                  updateStatus(
+                    employeeId: employee['id'].toString(),
+                     idpointage: employee['idpointage'].toString(), newStatus: 'Rejeté',
+                  );
                   Navigator.pop(context);
                 },
                 child: const Text('REJETER', style: TextStyle(color: Colors.red)),
               ),
               ElevatedButton(
                 onPressed: () {
-                  _updateStatus(employee, 'Validé', '');
+                  updateStatus(
+                    employeeId: employee['id'].toString(),
+                    newStatus: 'Validé',  idpointage: employee['idpointage'].toString(),
+                  );
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: const Text('VALIDER',style: TextStyle(color: Colors.black),),
+                child: const Text('VALIDER', style: TextStyle(color: Colors.black)),
               ),
             ] else ...[
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('FERMER',style: TextStyle(color: Colors.black),
-                ),
+                child: const Text('FERMER', style: TextStyle(color: Colors.black)),
               ),
             ],
           ],
@@ -551,14 +673,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  void _updateStatus(Map<String, dynamic> employee, String status, String reason) {
-    setState(() {
-      employee['validationStatus'] = status;
-      if (status == 'Rejeté') {
-        employee['rejectionReason'] = reason.isNotEmpty ? reason : 'Non spécifié';
-      }
-    });
+  Future<void> updateStatus({
+    required String employeeId,
+    required String newStatus,
+    required String idpointage,
+  }) async {
+    try {
+
+      final supabase = Supabase.instance.client;
+      Logger().i(employeeId);
+
+      // Requête pour mettre à jour le statut dans la table pointage
+      await supabase
+          .from('pointage')
+          .update({
+        'statut': newStatus,
+       // 'updated_at': DateTime.now().toIso8601String(),
+      })
+          .eq('idemploye', employeeId)
+           .eq('id',idpointage);
+Logger().i(idpointage);
+
+      Logger().i('Statut employé $employeeId mis à jour: $newStatus');
+
+    } catch (e) {
+      Logger().e('Erreur mise à jour statut employé: $e');
+      throw Exception('Erreur lors de la mise à jour du statut');
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -569,7 +712,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         elevation: 0,
         title: const Text('Tableau de bord Admin'),
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
           ),
         ),
@@ -581,66 +724,106 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 25,horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
         child: Column(
           children: [
-              SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildFilterSection(),
             Expanded(
-              child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  :ListView.builder(
-                itemCount: filteredEmployees.length,
-                itemBuilder: (context, index) {
-                  final employee = filteredEmployees[index];
-                  final hasLate = _isLate(employee['arrival']);
-                  final hasOvertime = _isOvertime(employee['departure']);
-                  final isAbsent = _isAbsent(employee);
-                  final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
-                  return Card(
-                    color: Colors.white,
-                    margin: const EdgeInsets.all(5),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                          backgroundColor: Colors.white,
-                          child: Icon(employee['avatar'],color: Colors.blue,)),
-                      title: Text(employee['nom'], style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Statut: ${employee['status']}', style: TextStyle(
-                              color: Colors.black)),
-                          Text('Date: ${employee['date']}', style: TextStyle(
-                              color: Colors.black)),
-                          if (hasLate && _selectedIndex != 4)
-                            Text('Retard: $lateMinutes min', style: TextStyle(
-                                color: Colors.black)),
-                          if (hasLate && _selectedIndex == 4)
-                            Text('Pénalité: ${_calculatePenaltyFromMinutes(lateMinutes)}',
-                                style: TextStyle(
-                                    color: Colors.black)),
-                          if (hasOvertime)
-                            Text('Heures supp: ${_calculateHeuresSupp(employee['departure'])}', style: TextStyle(
-                                color: Colors.black)),
-                          if (isAbsent && employee['absenceMotif'] != null)
-                            Text('Motif: ${employee['absenceMotif']}',
-                                style: const TextStyle(fontStyle: FontStyle.italic,
-                                )),
-                        ],
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: filteredEmployees, // Utilisez le Future ici
+                builder: (context, snapshot) {
+                  // Gérer les différents états du Future
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue), // Couleur bleue pour l'indicateur de chargement
                       ),
-                      trailing: (hasLate || hasOvertime || isAbsent)
-                          ? _buildStatusBadge(employee['validationStatus'])
-                          : null,
-                      onTap: () {
-                        if (hasLate || hasOvertime || isAbsent) {
-                          _showValidationDialog(employee);
-                        }
+                    );
+                  }
+                    // Les données sont disponibles
+                    final employees = snapshot.data!;
+                    return ListView.builder(
+                      itemCount: employees.length,
+                      itemBuilder: (context, index) {
+                        final employee = employees[index];
+                        final hasLate = _isLate(employee['arrival']);
+                        final hasOvertime = _isOvertime(employee['departure']);
+                        final isAbsent = _isAbsent(employee);
+                        final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
+
+                        return Card(
+                          color: Colors.white,
+                          margin: const EdgeInsets.all(5),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Icon(employee['avatar'], color: Colors.blue), // Couleur bleue pour l'icône
+                            ),
+                            title: Text(employee['nom'], style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            )),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Type: ${employee['type']}', style: const TextStyle(
+                                  color: Colors.black,
+                                )),
+                                Text('Date: ${employee['date']}', style: const TextStyle(
+                                  color: Colors.black,
+                                )),
+                                if (employee['type'] == "Arrivée" )
+                                  Text('Arrivé à ${employee['arrival']}', style: const TextStyle(
+                                    color: Colors.black,
+                                  )),
+                                if (employee['type'] == "Départ" )
+                                  Text('Départ à ${employee['departure']}', style: const TextStyle(
+                                    color: Colors.black,
+                                  )),
+                                if (hasLate && _selectedIndex != 4)
+                                  Text('Retard: ${formatMinutesToHours(lateMinutes)}', style: const TextStyle(
+                                    color: Colors.black,
+                                  )),
+                                  if (_selectedFilter == 'Pénalité') ...[
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      'Pénalité totale: ${(employee['total'])} F',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ] else
+                                    if (hasOvertime)
+                                      Text('Heures supp: ${employee['heuresSupp']}', style: const TextStyle(
+                                        color: Colors.black,
+                                      )),
+
+                                if (_selectedFilter == 'Absent') ...[
+                                  const SizedBox(height: 5),
+                                    Text('Date: ${employee['date']  }', style: const TextStyle(
+                                    color: Colors.black,
+                                    )),
+                                ],
+                              ],
+                            ),
+                            trailing: (hasLate || hasOvertime || isAbsent)
+                                ? _buildStatusBadge(employee['statut'])
+                                : null,
+                            onTap: () {
+                              if (hasLate || hasOvertime || isAbsent) {
+                                _showValidationDialog(employee);
+                              }
+                            },
+                          ),
+                        );
                       },
-                    ),
-                  );
-                },
+                    );
+                  }
+
               ),
             ),
           ],
@@ -648,6 +831,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
+
 
   Widget _buildStatusBadge(String status) {
     switch (status) {

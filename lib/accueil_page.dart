@@ -201,13 +201,9 @@ class AccueilState extends State<Accueil> {
 
   Future<void> marquerArrivee(BuildContext context) async {
     setState(() => isLoading = true);
-
     DateTime now = DateTime.now();
     DateTime limite = DateTime(now.year, now.month, now.day, 8, 30);
     String heureArrivee = DateFormat('HH:mm').format(now);
-
-
-
     final authBox = Hive.box('authBox');
     Users user =  authBox.get('stocker_user');
     user.id;
@@ -216,11 +212,9 @@ class AccueilState extends State<Accueil> {
         'idemploye':user.id,
         'date_heure': now.toIso8601String(),
         'type': "Arrivee",
-             'statut':'En attente',
-      };
+           };
       Logger().i(pointage);
-
-           await Supabase.instance.client.from('pointage').insert(pointage);
+      await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           padding: EdgeInsets.all(25),
@@ -234,7 +228,6 @@ class AccueilState extends State<Accueil> {
         builder: (context) {
           TextEditingController motifController = TextEditingController();
           bool isLoading = false;
-
           return StatefulBuilder(
             builder: (context, setState) {
               return AlertDialog(
@@ -273,16 +266,12 @@ class AccueilState extends State<Accueil> {
                           'statut': 'En attente',
                           'motif': motif,
                         };
-
                         Logger().i(pointage);
-
                         await Supabase.instance.client
                             .from('pointage')
                             .insert(pointage);
-
                         setState(() => isLoading = false);
                         Navigator.pop(context);
-
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             padding: EdgeInsets.all(25),
@@ -313,7 +302,6 @@ class AccueilState extends State<Accueil> {
         },
       );
     }
-
   }
 
   Future<void> marquerDepart(BuildContext context) async {
@@ -328,11 +316,8 @@ class AccueilState extends State<Accueil> {
       final Map<String,dynamic> pointage = {
         'idemploye':user.id,
         'date_heure': now.toIso8601String(),
-        'type': "Départ",
-        'statut':'En attente',
-      };
+        'type': "Départ",};
       Logger().i(pointage);
-
       await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -347,7 +332,6 @@ class AccueilState extends State<Accueil> {
         builder: (context) {
           TextEditingController raisonController = TextEditingController();
           bool isLoading = false;
-
           return StatefulBuilder(
             builder: (context, setState) {
               return AlertDialog(
@@ -391,10 +375,8 @@ class AccueilState extends State<Accueil> {
                         await Supabase.instance.client
                             .from('pointage')
                             .insert(pointage);
-
                         setState(() => isLoading = false);
                         Navigator.pop(context);
-
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             padding: EdgeInsets.all(25),

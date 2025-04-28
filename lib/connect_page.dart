@@ -288,7 +288,7 @@ class ConnectPageState extends State<ConnectPage> {
   }) {
     return TextField(
       controller: controller,
-      cursorColor: Colors.black,
+      cursorColor: Colors.blue,
       obscureText: isPassword,
       decoration: InputDecoration(
         labelText: label,
