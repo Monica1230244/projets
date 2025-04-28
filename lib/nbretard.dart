@@ -127,7 +127,7 @@ class _Top10RetardsPageState extends State<Top10RetardsPage> {
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month,color: Colors.black26,),
+            icon: Icon(Icons.calendar_month,color: Colors.black12,),
             onPressed: _selectMonth,
             tooltip: "Changer de mois",
           ),
