@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:projets/presence_page.dart';
 import 'package:projets/profil.dart';
+import 'package:projets/profilTotal.dart';
 import 'package:projets/utilisateur.dart';
 import 'package:projets/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -106,6 +107,18 @@ class AccueilState extends State<Accueil> {
                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => CreateEmployee()),
+                );
+              },
+            ),
+
+            LoadingMenuButton(
+              icon: Icons.person,
+              text: "Modifier compte utilisateur",
+              onPressed: () async {
+
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Profiltotal()),
                 );
               },
             ),

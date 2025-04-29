@@ -438,10 +438,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       }
       return employeePenalties.values.toList();
     }
-
     return filtered;
   }
-
   Future<List<Map<String, dynamic>>> _getAllAbsences() async {
     try {
       // Récupérer tous les utilisateurs
