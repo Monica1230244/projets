@@ -204,9 +204,31 @@ class AccueilState extends State<Accueil> {
     DateTime now = DateTime.now();
     DateTime limite = DateTime(now.year, now.month, now.day, 8, 30);
     String heureArrivee = DateFormat('HH:mm').format(now);
+
     final authBox = Hive.box('authBox');
     Users user =  authBox.get('stocker_user');
     user.id;
+
+    final response = await Supabase.instance.client
+        .from('pointage')
+        .select()
+        .eq('idemploye', user.id)
+        .eq('type', 'Arrivee')
+        .gte('date_heure', DateTime(now.year, now.month, now.day).toIso8601String())
+        .lte('date_heure', DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String());
+
+    if (response != null && response.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          padding: EdgeInsets.all(20),
+          content: Text("Vous avez déjà marqué votre arrivée aujourd'hui.", style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() => isLoading = false);
+      return;
+    }
+
     if (now.isBefore(limite)) {
            final Map<String,dynamic> pointage = {
         'idemploye':user.id,
@@ -217,7 +239,7 @@ class AccueilState extends State<Accueil> {
       await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          padding: EdgeInsets.all(25),
+          padding: EdgeInsets.all(20),
           content: Text("Présence marquée avec succès à $heureArrivee",style: TextStyle(fontSize: 20),),
           backgroundColor: Colors.green,
         ),
@@ -312,6 +334,26 @@ class AccueilState extends State<Accueil> {
     final authBox = Hive.box('authBox');
     Users user =  authBox.get('stocker_user');
     user.id;
+
+    final existingDepart = await Supabase.instance.client
+        .from('pointage')
+        .select()
+        .eq('idemploye', user.id)
+        .eq('type', 'Départ')
+        .gte('date_heure', DateTime(now.year, now.month, now.day).toIso8601String())
+        .lte('date_heure', DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String());
+
+    if (existingDepart != null && existingDepart.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          padding: EdgeInsets.all(20),
+          content: Text("Vous avez déjà marqué votre départ aujourd'hui.", style: TextStyle(fontSize: 20)),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (now.isBefore(limite)) {
       final Map<String,dynamic> pointage = {
         'idemploye':user.id,
@@ -321,7 +363,7 @@ class AccueilState extends State<Accueil> {
       await Supabase.instance.client.from('pointage').insert(pointage);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          padding: EdgeInsets.all(25),
+          padding: EdgeInsets.all(20),
           content: Text("Départ marqué avec succès à $heureDepart",style: TextStyle(fontSize: 20),),
           backgroundColor: Colors.green,
         ),
