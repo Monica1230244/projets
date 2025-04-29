@@ -113,7 +113,6 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
       await fetchTop10();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
