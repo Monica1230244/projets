@@ -30,6 +30,11 @@ class AccueilState extends State<Accueil> {
 
   @override
   Widget build(BuildContext context) {
+    final authBox = Hive.box('authBox');
+    final Users user = authBox.get('stocker_user');
+
+    final bool isAdmin = user.type == 'admin';
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -85,6 +90,7 @@ class AccueilState extends State<Accueil> {
               },
             ),
 
+            if (isAdmin) ...[
          LoadingMenuButton(
               icon: Icons.analytics,
               text: "Consulter tableau de bord",
@@ -97,8 +103,6 @@ class AccueilState extends State<Accueil> {
               },
             ),
 
-
-
             LoadingMenuButton(
               icon: Icons.person,
               text: "Créer compte utilisateur",
@@ -110,8 +114,7 @@ class AccueilState extends State<Accueil> {
                 );
               },
             ),
-
-            LoadingMenuButton(
+              LoadingMenuButton(
               icon: Icons.person,
               text: "Modifier compte utilisateur",
               onPressed: () async {
@@ -122,7 +125,7 @@ class AccueilState extends State<Accueil> {
                 );
               },
             ),
-
+           ],
             LoadingMenuButton(
               icon: Icons.person,
               text: "Top 10 des présences",

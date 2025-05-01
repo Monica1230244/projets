@@ -11,7 +11,6 @@ class Profiltotal extends StatefulWidget {
   @override
   State<Profiltotal> createState() => _ProfiltotalState();
 }
-
 class _ProfiltotalState extends State<Profiltotal> {
   List<Map<String, dynamic>> utilisateurs = [];
   bool isLoading = true;
@@ -22,7 +21,6 @@ class _ProfiltotalState extends State<Profiltotal> {
     super.initState();
     chargerTousLesUtilisateurs();
   }
-
   Future<void> chargerTousLesUtilisateurs() async {
     try {
       final response = await Supabase.instance.client
@@ -55,7 +53,6 @@ class _ProfiltotalState extends State<Profiltotal> {
       });
     }
   }
-
   String _getNestedValue(Map<String, dynamic> data, List<String> keys) {
     try {
       dynamic current = data;
@@ -68,7 +65,6 @@ class _ProfiltotalState extends State<Profiltotal> {
       return 'Non spécifié';
     }
   }
-
   Widget _buildUserCard(Map<String, dynamic> user) {
     return Card(
       color: Colors.white,
@@ -99,13 +95,10 @@ class _ProfiltotalState extends State<Profiltotal> {
                     final adresseController = TextEditingController(text: user['adresse']);
                     final emailController = TextEditingController(text: user['email']);
                     final dateNaissanceController = TextEditingController(text: user['datenaissance']);
-
                     List<Map<String, dynamic>> types = await Supabase.instance.client.from('type').select();
                     List<Map<String, dynamic>> postes = await Supabase.instance.client.from('poste').select();
-
                     String? selectedTypeId = user['idtype']?.toString();
                     String? selectedPosteId = user['idposte']?.toString();
-
                     showDialog(
                       context: context,
                       builder: (context) {
@@ -178,7 +171,6 @@ class _ProfiltotalState extends State<Profiltotal> {
                                           focusedBorder: UnderlineInputBorder(
                                             borderSide: BorderSide(color: Colors.blue),
                                           ),)),
-
                                     DropdownButtonFormField<String>(
                                       value: selectedTypeId,
                                       decoration: InputDecoration(

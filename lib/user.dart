@@ -186,7 +186,6 @@ Logger().d(response);
       isLoading = false;
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -254,7 +253,6 @@ Logger().d(response);
       ),
     );
   }
-
   Widget _buildDateSelector(String label, DateTime date, VoidCallback onTap) {
     return Column(
       children: [
@@ -280,7 +278,6 @@ Logger().d(response);
       ],
     );
   }
-
   Widget _buildOptionTile({
     required IconData icon,
     required Color color,
