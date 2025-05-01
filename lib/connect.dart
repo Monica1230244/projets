@@ -6,12 +6,14 @@ import 'package:projets/accueil_page.dart';
 import 'package:projets/constants.dart';
 import 'package:projets/utilisateur.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class Connect extends StatefulWidget {
   @override
   State<Connect> createState() => ConnectPageState();
 }
-
+final Uri _url = Uri.parse("mailto:smith@example.org?subject=Demande d'assistance pour la création de compte&body=Bonjour,Je rencontre des difficultés pour créer un compte sur votre plateforme et j'aurais besoin de votre assistance pour finaliser la procédure. Pourriez-vous m'indiquer les étapes à suivre ?Je vous remercie par avance pour votre aide.%20");
 class ConnectPageState extends State<Connect> {
   TextEditingController emailController = TextEditingController();
   TextEditingController mdpController = TextEditingController();
@@ -189,102 +191,111 @@ class ConnectPageState extends State<Connect> {
       body: Center(
         child: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                'assets/images/logo1.png',
-                height: 200,
-                width: 200,
-                fit: BoxFit.contain,
-              ),
-              SizedBox(height: 10),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: _buildTextField(
-                  'Email',
-                  Icons.email,
-                  emailController,
-                ),
-              ),
-              SizedBox(height: 20),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: _buildTextField(
-                  'Mot de passe',
-                  Icons.lock,
-                  mdpController,
-                  isPassword: true,
-                ),
-              ),
-              SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () async{
-                  if(!_isLoading){
-                    await login();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  padding: EdgeInsets.symmetric(horizontal: 130, vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 5,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-                    : Text(
-                  'Se connecter',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Column(
+                mainAxisSize: MainAxisSize.max,
                 children: [
-                  TextButton(
-                    onPressed: _handleForgotPassword,
-                    child: Text(
-                      'Mot de passe oublié ?',
-                      style: TextStyle(color: primaryColor , fontWeight:FontWeight.bold , fontSize: 18),
+                  Image.asset(
+                    'assets/images/logo1.png',
+                    height: 200,
+                    width: 200,
+                    fit: BoxFit.contain,
+                  ),
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildTextField(
+                      'Email',
+                      Icons.email,
+                      emailController,
                     ),
                   ),
-                ],
-              ),
-              SizedBox(height: 10),
-              TextButton(
-                onPressed: _handleForgotPassword,
-                child: RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildTextField(
+                      'Mot de passe',
+                      Icons.lock,
+                      mdpController,
+                      isPassword: true,
                     ),
-                    children: [
-                    TextSpan(
-                    text: 'Mot de passe oublié ? ',
-                    style: TextStyle(color: Colors.black54),
                   ),
-                    TextSpan(
-                      text: 'Contacter l\'administrateur!',
+                  SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: () async{
+                      if(!_isLoading){
+                        await login();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      padding: EdgeInsets.symmetric(horizontal: 115, vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 5,
+                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                        : Text(
+                      'Se connecter',
                       style: TextStyle(
-                        color: primaryColor, // Style différent pour la deuxième partie
-                        decoration: TextDecoration.underline,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: _handleForgotPassword,
+                        child: Text(
+                          'Mot de passe oublié ?',
+                          style: TextStyle(color: primaryColor , fontWeight:FontWeight.bold , fontSize: 18),
+                        ),
+                      ),
                     ],
                   ),
+
+                ],
+              ),
+              SizedBox(height: 120),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Text("Vous n'avez pas de compte ?" , style: TextStyle(  fontWeight:FontWeight.bold ),),
+                    TextButton(
+                      onPressed: _launchUrl,
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Contacter l\'administrateur !',
+                              style: TextStyle(
+                                color: primaryColor,
+
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               )
             ],
@@ -302,7 +313,7 @@ class ConnectPageState extends State<Connect> {
       }) {
     return TextField(
       controller: controller,
-      cursorColor: Colors.black,
+      cursorColor: Colors.blue,
       obscureText: isPassword,
       decoration: InputDecoration(
         labelText: label,
@@ -326,3 +337,11 @@ class ConnectPageState extends State<Connect> {
     );
   }
 }
+
+Future<void> _launchUrl() async {
+  if (!await launchUrl(_url)) {
+    throw Exception('Impossible de lancer $_url');
+  }
+}
+
+
