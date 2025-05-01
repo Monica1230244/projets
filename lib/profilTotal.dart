@@ -174,10 +174,20 @@ class _ProfiltotalState extends State<Profiltotal> {
                                     DropdownButtonFormField<String>(
                                       value: selectedTypeId,
                                       decoration: InputDecoration(
-                                          labelStyle: TextStyle(color: Colors.black,fontSize: 16,fontWeight: FontWeight.bold),
-                                          labelText: 'Type',
+                                        labelStyle: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                        // Style du label en focus
+                                        floatingLabelStyle: TextStyle(color: Colors.black),
+                                        labelText: 'Type',
                                         enabledBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(color: Colors.grey),
+                                        ),
+                                        // Bordure bleue quand le champ est focus
+                                        focusedBorder: UnderlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.blue),
                                         ),
                                       ),
                                       dropdownColor: Colors.white,
@@ -201,6 +211,9 @@ class _ProfiltotalState extends State<Profiltotal> {
                                           labelText: 'Poste',
                                         enabledBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(color: Colors.grey),
+                                        ),
+                                        focusedBorder: UnderlineInputBorder(
+                                          borderSide: BorderSide(color: Colors.blue),
                                         ),
                                       ),
                                       dropdownColor: Colors.white,
@@ -261,8 +274,8 @@ class _ProfiltotalState extends State<Profiltotal> {
                                   child: isUpdating ?
                                   CircularProgressIndicator(
                                     color: Colors.blue,) :
-                                  Text("Modifier",style: TextStyle(color: Colors.blue),),
-                                ),
+                                  Text("Modifier",style: TextStyle(color: Colors.blue)),)
+
                               ],
                             );
                           },
