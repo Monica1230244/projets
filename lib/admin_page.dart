@@ -47,17 +47,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _employees = response.map<Map<String, dynamic>>((record) {
         DateTime dateHeure = DateTime.parse(record['date_heure']);
         String date = DateFormat('dd MMMM yyyy', 'fr_FR').format(dateHeure);
-        String heureArrivee = record['type'] == 'Arrivee' ? DateFormat("HH 'h' mm").format(dateHeure) : '';
-        String heureDepart = record['type'] == 'Départ' ? DateFormat("HH' h' mm").format(dateHeure) : '';
+
+        // Calcul de l'heure d'arrivée ou départ selon le type de pointage
+        String heureArrivee = '';
+        String heureDepart = '';
+        if (record['type'] == 'Arrivee') {
+          heureArrivee = DateFormat("HH 'h' mm").format(dateHeure);
+        } else if (record['type'] == 'Départ') {
+          heureDepart = DateFormat("HH 'h' mm").format(dateHeure);
+        }
+
+        // Récupération des informations de l'utilisateur
         final user = record['user'] as Map<String, dynamic>? ?? {};
         final nomComplet = '${user['prenom']} ${user['nom']}';
-       String type = _determineStatus(record, dateHeure);
 
+        // Détermination du statut (présence à l'heure, retard, ou heures supplémentaires)
+        String type = _determineStatus(record, dateHeure);
 
-            return {
+        // Calcul des heures supplémentaires si l'employé est en mode heures supplémentaires
+        String heuresSupp = '';
+        if (type == 'Heures Supp') {
+          heuresSupp = _calculateHeuresSupp(heuresSupp);
+        }
 
-          'id':record['idemploye'],
-              'idpointage':record['id'],
+        // Motif de retard
+        String lateMotif = record['motif'] ?? record['raison'] ?? '';
+
+        return {
+          'id': record['idemploye'],
+          'idpointage': record['id'],
           'nom': nomComplet,
           'arrival': heureArrivee,
           'departure': heureDepart,
@@ -65,9 +83,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           'date_heure': dateHeure,
           'type': type,
           'avatar': Icons.person,
-          'lateMotif': record['motif'] ?? record['raison'] ?? '',
-          'statut': record['statut'] ,
-
+          'heuresSupp': heuresSupp, // Affiche les heures supplémentaires si applicable
+          'lateMotif': lateMotif, // Affiche le motif de retard
+          'statut': record['statut'],
         };
       }).toList();
 
@@ -137,7 +155,6 @@ Logger().i(lateMinutes);
     final suppMinutes = (hour - 18) * 60 + (minute - 30);
     return '${suppMinutes ~/ 60}h ${suppMinutes % 60}min';
   }
-
   bool _isLate(String? arrival) {
     if (arrival == null || arrival.isEmpty) return false;
     final time = arrival.split('h');

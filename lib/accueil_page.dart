@@ -126,6 +126,7 @@ class AccueilState extends State<Accueil> {
               },
             ),
            ],
+
             LoadingMenuButton(
               icon: Icons.person,
               text: "Top 10 des présences",
