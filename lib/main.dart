@@ -9,6 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:projets/accueil_page.dart';
 import 'package:projets/connect_admin.dart';
 
+import 'connect.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -50,7 +52,7 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('fr', 'FR')],
-      home: ConnectPage(),
+      home: Connect(),
     );
   }
 }

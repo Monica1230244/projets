@@ -113,54 +113,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final minutes = totalMinutes % 60;
     return "${hours} h ${minutes.toString().padLeft(2, '0')} mn";
   }
-
-
+  
   static int _calculateLateMinutes(String arrivalTime) {
     if (arrivalTime.isEmpty) return 0;
     final parts = arrivalTime.split('h');
     final hour = int.parse(parts[0]);
     final minute = int.parse(parts[1]);
-    return (hour - 8) * 60 + (minute - 30);
+    final lateMinutes= (hour - 8) * 60 + (minute - 30);
+    return lateMinutes;
   }
 
-
-
-    static String _calculatePenaltyFromMinutes(int lateMinutes) {
-      if (lateMinutes <= 0) {
-        return 'Aucune sanction';
-      }
-      // Calcul du nombre de tranches de 10 minutes  .ceil() arrondi en entier le  plus proche
-      final tranches = (lateMinutes / 10).ceil();
-
-      // Détermination du type de sanction
-      String sanctionType;
-      if (tranches == 1) {
-        sanctionType = 'Avertissement';
-      } else {
-        // Calcul de la pénalité (5.000 F par tranche au-delà de la première)
-        final penalty = (tranches - 1) * 5000;
-
-        //NumberFormat.currency est une classe dans la bibliothèque intl de Dart qui permet de formater les nombres en une représentation monétaire
-
-        sanctionType = NumberFormat.currency(
-          decimalDigits: 0,
-          symbol: '',
-          customPattern: '#,##0 F',//  Permet de faire un format personnalisé avec un symbole après le nombre
-
-        ).format(penalty);
-      }
-
-      return '$sanctionType ';
-    }
-
-  //  pour calculer le montant total de la pénalité
-  static int _calculatePenaltyAmount(int lateMinutes) {
-    if (lateMinutes <= 0) return 0;
-    final tranches = (lateMinutes / 10).ceil();
-    return tranches > 1 ? (tranches - 1) * 5000 : 0;
+  int calculerPenalite(int lateMinutes) {
+Logger().i(lateMinutes);
+    int penaliteTotale = (lateMinutes ~/ 10) * 5000;  // Calcul de la pénalité totale
+    return penaliteTotale;
   }
-
-
 
   String _calculateHeuresSupp(String departure) {
     if (departure.isEmpty) return '';
@@ -421,7 +388,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       for (var emp in filtered) {
         final String employeeId = emp['id'].toString();
         final int lateMinutes = _calculateLateMinutes(emp['arrival']);
-        final int penaltyAmount = _calculatePenaltyAmount(lateMinutes);
+        final int penaltyAmount = calculerPenalite(lateMinutes);
 
         if (employeePenalties.containsKey(employeeId)) {
           employeePenalties[employeeId]!['total'] += penaltyAmount;
@@ -586,7 +553,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
                   Text('Arrivé à ${employee['arrival']} (Normal: 08h30)'),
                   Text('Retard: ${formatMinutesToHours(lateMinutes)}'),
-                  Text('Sanction: ${_calculatePenaltyFromMinutes(lateMinutes)}',
+                  Text('Sanction: ${calculerPenalite(lateMinutes)}',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.red,
