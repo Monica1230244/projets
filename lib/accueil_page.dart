@@ -90,7 +90,7 @@ class AccueilState extends State<Accueil> {
               },
             ),
 
-           // if (isAdmin) ...[
+            if (isAdmin) ...[
          LoadingMenuButton(
               icon: Icons.analytics,
               text: "Consulter tableau de bord",
@@ -125,7 +125,7 @@ class AccueilState extends State<Accueil> {
                 );
               },
             ),
-           //],
+           ],
             LoadingMenuButton(
               icon: Icons.person,
               text: "Top 10 des présences",

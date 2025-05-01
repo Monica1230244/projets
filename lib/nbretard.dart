@@ -39,7 +39,7 @@ class _Top10RetardsPageState extends State<Top10RetardsPage> {
         final heureArrivee = TimeOfDay.fromDateTime(dateHeure);
 
         // Retard : arrivée après 08:30
-        if ((heureArrivee.hour > 8) || (heureArrivee.hour == 8 && heureArrivee.minute > 30)) {
+        if (heureArrivee.hour > 8 || (heureArrivee.hour == 8 && heureArrivee.minute > 30)) {
           String employeId = pointage['idemploye'].toString();
           retardParEmploye.update(employeId, (value) => value + 1, ifAbsent: () => 1);
         }
@@ -123,11 +123,11 @@ class _Top10RetardsPageState extends State<Top10RetardsPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Top 10 des retards',style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),),
+        title: Text('Top 10 des retards', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month,color: Colors.black38,),
+            icon: Icon(Icons.calendar_month, color: Colors.black38),
             onPressed: _selectMonth,
             tooltip: "Changer de mois",
           ),
@@ -136,9 +136,7 @@ class _Top10RetardsPageState extends State<Top10RetardsPage> {
       body: isLoading
           ? Center(child: CircularProgressIndicator(
         strokeWidth: 3,
-        valueColor: AlwaysStoppedAnimation<Color>(
-          Colors.blue,
-        ),
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
       ))
           : top10.isEmpty
           ? Center(child: Text("Aucune donnée trouvée."))
@@ -161,7 +159,7 @@ class _Top10RetardsPageState extends State<Top10RetardsPage> {
                   margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   child: ListTile(
                     leading: CircleAvatar(
-                      child: Text('${index + 1}',style: TextStyle(color: Colors.black),),
+                      child: Text('${index + 1}', style: TextStyle(color: Colors.black)),
                       backgroundColor: Colors.black26,
                     ),
                     title: Text(
