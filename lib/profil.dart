@@ -179,8 +179,8 @@ class _ProfilEmployeState extends State<ProfilEmploye> {
                     const SizedBox(height: 10),
                     ElevatedButton.icon(
                       onPressed: _pickImageFromGallery,
-                      icon: const Icon(Icons.photo,color: Colors.black,),
-                      label: const Text("Ajouter une photo",style: TextStyle(color: Colors.black),),
+                      icon: const Icon(Icons.photo,color: Colors.white,),
+                      label: const Text("Ajouter une photo",style: TextStyle(color: Colors.white),),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                       ),
@@ -200,8 +200,8 @@ class _ProfilEmployeState extends State<ProfilEmploye> {
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.logout,color: Colors.black,),
-                  label: const Text("Déconnexion",style: TextStyle(color: Colors.black),),
+                  icon: const Icon(Icons.logout,color: Colors.white,),
+                  label: const Text("Déconnexion",style: TextStyle(color: Colors.white),),
                   onPressed: deconnexion,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF2B9BD7),
