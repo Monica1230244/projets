@@ -69,24 +69,31 @@ class _ProfilState extends State<Profil> {
   }
   Widget _buildUserCard(Map<String, dynamic> user) {
     return Card(
+      shadowColor: Colors.white,
       color: Colors.white,
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       elevation: 20,
       child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 12,vertical: 10),
         child: ExpansionTile(
           iconColor: Colors.black,
           backgroundColor: Colors.white,
           title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-           /* CircleAvatar(
-              radius: 10,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person_outline, size: 12, color: Colors.blue),
-            ),*/
-            Text(
-              "${user['nom'] ?? ''} ${user['prenom'] ?? ''}",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, size: 16, color: Colors.blue),
+                ),
+                SizedBox(width: 5,),
+                Text(
+                  "${user['nom'] ?? ''} ${user['prenom'] ?? ''}",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ],
             ),
             SizedBox(height: 4),
             Text(
@@ -126,7 +133,7 @@ class _ProfilState extends State<Profil> {
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white),
                   ),
-                  SizedBox(width: 80),
+                  SizedBox(width: 50),
                   ElevatedButton.icon(
                     onPressed: () async {
                       final id = user['id'];
@@ -169,20 +176,27 @@ class _ProfilState extends State<Profil> {
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16),
       child: Row(
         children: [
-          Text("$label : ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16,color: Colors.black)),
+          Text(
+            "$label : ",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+          ),
           Expanded(child: Text(value)),
         ],
       ),
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
+        backgroundColor: Color(0xFFFFFFFF),
+        shadowColor: Colors.white,
+        //foregroundColor: Color(0xFFFFFFFF),
+        elevation: 10,
+        scrolledUnderElevation: 0,
         title: Text("Profil de tous les utilisateurs",
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 25)),
         iconTheme: IconThemeData(color: Colors.black),
