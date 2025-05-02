@@ -30,10 +30,15 @@ class AccueilState extends State<Accueil> {
 
   @override
   Widget build(BuildContext context) {
+
     final authBox = Hive.box('authBox');
     final Users user = authBox.get('stocker_user');
+    final String userType = user.type;
 
-    final bool isAdmin = user.type == 'admin';
+    Logger().i( userType  );
+
+    final bool isAdmin = (userType == 'af8ab238-6240-4ddb-976e-c4bdd8383d8f');
+
 
     return Scaffold(
       backgroundColor: Colors.white,

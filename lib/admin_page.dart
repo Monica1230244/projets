@@ -47,8 +47,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _employees = response.map<Map<String, dynamic>>((record) {
         DateTime dateHeure = DateTime.parse(record['date_heure']);
         String date = DateFormat('dd MMMM yyyy', 'fr_FR').format(dateHeure);
-
-        // Calcul de l'heure d'arrivée ou départ selon le type de pointage
         String heureArrivee = '';
         String heureDepart = '';
         if (record['type'] == 'Arrivee') {
@@ -57,7 +55,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
           heureDepart = DateFormat("HH 'h' mm").format(dateHeure);
         }
 
-        // Récupération des informations de l'utilisateur
         final user = record['user'] as Map<String, dynamic>? ?? {};
         final nomComplet = '${user['prenom']} ${user['nom']}';
 
@@ -67,7 +64,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         // Calcul des heures supplémentaires si l'employé est en mode heures supplémentaires
         String heuresSupp = '';
         if (type == 'Heures Supp') {
-          heuresSupp = _calculateHeuresSupp(heuresSupp);
+          heuresSupp = _calculateHeuresSupp(heureDepart);
         }
 
         // Motif de retard
@@ -83,8 +80,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           'date_heure': dateHeure,
           'type': type,
           'avatar': Icons.person,
-          'heuresSupp': heuresSupp, // Affiche les heures supplémentaires si applicable
-          'lateMotif': lateMotif, // Affiche le motif de retard
+          'heuresSupp': heuresSupp,
+          'overtimeMotif': record['raison'] ?? '',
+          'lateMotif': lateMotif,
           'statut': record['statut'],
         };
       }).toList();
@@ -147,13 +145,31 @@ Logger().i(lateMinutes);
     return penaliteTotale;
   }
 
+
   String _calculateHeuresSupp(String departure) {
     if (departure.isEmpty) return '';
-    final time = departure.split('h');
-    final hour = int.parse(time[0]);
-    final minute = int.parse(time[1]);
-    final suppMinutes = (hour - 18) * 60 + (minute - 30);
-    return '${suppMinutes ~/ 60}h ${suppMinutes % 60}min';
+    try {
+      final cleanedTime = departure.replaceAll(' ', ''); // Enlever les espaces
+      final timeParts = cleanedTime.split('h');
+      if (timeParts.length != 2) return '';
+
+      final hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+
+      final referenceHour = 18;
+      final referenceMinute = 30;
+
+      final totalReference = referenceHour * 60 + referenceMinute;
+      final totalActual = hour * 60 + minute;
+
+      if (totalActual <= totalReference) return '';
+
+      final diffMinutes = totalActual - totalReference;
+      return '${diffMinutes ~/ 60}h ${(diffMinutes % 60).toString().padLeft(2, '0')}mn';
+    } catch (e) {
+      Logger().e("Erreur calcul heures supp: $e");
+      return '';
+    }
   }
   bool _isLate(String? arrival) {
     if (arrival == null || arrival.isEmpty) return false;
@@ -586,11 +602,11 @@ Logger().i(lateMinutes);
                   const Text('DÉTAILS HEURES SUPP',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
                   Text('Départ à ${employee['departure']} (Normale: 18:30)'),
-                  Text('Heures supplémentaires: ${employee['heuresSupp']}'),
+                    Text('Heures supplémentaires: ${employee['heuresSupp']}'),
                   const SizedBox(height: 10),
                   const Text('Motif fourni:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(employee['overtimeMotif'] ?? employee['motif'] ?? 'Aucun motif fourni',
+                  Text(employee['overtimeMotif'] ?? employee['raison'] ?? 'Aucun motif fourni',
                       style: const TextStyle(fontStyle: FontStyle.italic)),
                   const Divider(height: 30),
                 ],
@@ -779,10 +795,11 @@ Logger().i(idpointage);
                                       ),
                                     ),
                                   ] else
-                                    if (hasOvertime)
-                                      Text('Heures supp: ${employee['heuresSupp']}', style: const TextStyle(
-                                        color: Colors.black,
-                                      )),
+
+                                      if (hasOvertime && employee['heuresSupp'].isNotEmpty)
+                                        Text('Heures supp: ${employee['heuresSupp']}', style: const TextStyle(
+                                          color: Colors.black,
+                                        )),
 
                                 if (_selectedFilter == 'Absent') ...[
                                   const SizedBox(height: 5),
