@@ -36,9 +36,18 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
 
       for (var pointage in pointages) {
         String employeId = pointage['idemploye'].toString();
-        String jour = pointage['date_heure'].substring(0, 10);
+        String dateHeure = pointage['date_heure'];
+        DateTime dateArrivee = DateTime.parse(dateHeure);
 
-        joursParEmploye.putIfAbsent(employeId, () => {}).add(jour);
+        // Heure de référence : 8:30 AM
+        DateTime heureReference = DateTime(dateArrivee.year, dateArrivee.month, dateArrivee.day, 8, 30);
+
+        // Vérification si l'employé est arrivé à l'heure
+        if (dateArrivee.isBefore(heureReference) || dateArrivee.isAtSameMomentAs(heureReference)) {
+          String jour = dateHeure.substring(0, 10);
+
+          joursParEmploye.putIfAbsent(employeId, () => {}).add(jour);
+        }
       }
 
       List<Map<String, dynamic>> resultats = [];
@@ -46,11 +55,11 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
       for (var entry in joursParEmploye.entries) {
         resultats.add({
           'employeId': entry.key,
-          'nbPresences': entry.value.length,
+          'nbArriveesALheure': entry.value.length, // Nombre d'arrivées à l'heure
         });
       }
 
-      resultats.sort((a, b) => b['nbPresences'].compareTo(a['nbPresences']));
+      resultats.sort((a, b) => b['nbArriveesALheure'].compareTo(a['nbArriveesALheure']));
 
       final topEmployes = resultats.take(10).toList();
 
@@ -67,7 +76,7 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
           finalTop10.add({
             'nom': userInfo['nom'],
             'prenom': userInfo['prenom'],
-            'presences': employe['nbPresences'],
+            'arriveesALheure': employe['nbArriveesALheure'], // Affichage du nombre d'arrivées à l'heure
           });
         }
       }
@@ -113,16 +122,17 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
       await fetchTop10();
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Top 10 des présences',style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),),
+        title: Text('Top 10 des arrivées à l\'heure', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month,color: Colors.black38),
+            icon: Icon(Icons.calendar_month, color: Colors.black38),
             onPressed: _selectMonth,
             tooltip: "Changer de mois",
           ),
@@ -131,9 +141,7 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
       body: isLoading
           ? Center(child: CircularProgressIndicator(
         strokeWidth: 3,
-        valueColor: AlwaysStoppedAnimation<Color>(
-          Colors.blue,
-        ),
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
       ))
           : top10.isEmpty
           ? Center(child: Text("Aucune donnée trouvée."))
@@ -156,14 +164,14 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
                   margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   child: ListTile(
                     leading: CircleAvatar(
-                      child: Text('${index + 1}',style: TextStyle(color: Colors.black),),
+                      child: Text('${index + 1}', style: TextStyle(color: Colors.black)),
                       backgroundColor: Colors.black26,
                     ),
                     title: Text(
                       '${employe['prenom']} ${employe['nom']}',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text('Présences : ${employe['presences']} jours'),
+                    subtitle: Text('Arrivées à l\'heure : ${employe['arriveesALheure']} jours'),
                   ),
                 );
               },

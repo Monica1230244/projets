@@ -30,10 +30,15 @@ class AccueilState extends State<Accueil> {
 
   @override
   Widget build(BuildContext context) {
+
     final authBox = Hive.box('authBox');
     final Users user = authBox.get('stocker_user');
+    final String userType = user.type;
 
-    final bool isAdmin = user.type == 'admin';
+    Logger().i( userType  );
+
+    final bool isAdmin = (userType == 'af8ab238-6240-4ddb-976e-c4bdd8383d8f');
+
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -90,7 +95,7 @@ class AccueilState extends State<Accueil> {
               },
             ),
 
-           // if (isAdmin) ...[
+            if (isAdmin) ...[
          LoadingMenuButton(
               icon: Icons.analytics,
               text: "Consulter tableau de bord",
@@ -125,7 +130,8 @@ class AccueilState extends State<Accueil> {
                 );
               },
             ),
-           //],
+           ],
+
             LoadingMenuButton(
               icon: Icons.person,
               text: "Top 10 des présences",
