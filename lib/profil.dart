@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:projets/utilisateur.dart';
 import 'package:projets/constants.dart';
+import 'connect.dart';
 import 'connect_page.dart';
 
 class ProfilEmploye extends StatefulWidget {
@@ -104,7 +105,7 @@ class _ProfilEmployeState extends State<ProfilEmploye> {
   void deconnexion() async {
     await Hive.box('authBox').clear();
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => ConnectPage()),
+      MaterialPageRoute(builder: (_) => Connect()),
           (route) => false,
     );
   }

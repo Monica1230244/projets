@@ -83,12 +83,12 @@ class _ProfilState extends State<Profil> {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                /*CircleAvatar(
                   radius: 16,
                   backgroundColor: Colors.white,
                   child: Icon(Icons.person, size: 16, color: Colors.blue),
                 ),
-                SizedBox(width: 5,),
+                SizedBox(width: 5,),*/
                 Text(
                   "${user['nom'] ?? ''} ${user['prenom'] ?? ''}",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -129,7 +129,7 @@ class _ProfilState extends State<Profil> {
                     icon: Icon(Icons.edit),
                     label: Text("Modifier"),
                     style: ElevatedButton.styleFrom(
-                        elevation: 8,
+                        elevation: 5,
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white),
                   ),
@@ -137,30 +137,75 @@ class _ProfilState extends State<Profil> {
                   ElevatedButton.icon(
                     onPressed: () async {
                       final id = user['id'];
-                      try {
-                        await Supabase.instance.client
-                            .from('user')
-                            .update({'is_active': false})
-                            .eq('id', id);
+                      final choix = await showDialog<String>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          backgroundColor: Colors.white,
+                          title: Text("Action sur le compte"),
+                          content: Text("Souhaitez-vous désactiver ou réactiver ce compte ?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'desactiver'),
+                              child: Text("Désactiver", style: TextStyle(color: Colors.red)),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, 'reactiver'),
+                              child: Text("Réactiver", style: TextStyle(color: Colors.green)),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, null),
+                              child: Text("Annuler",style: TextStyle(color: Colors.blue),),
+                            ),
+                          ],
+                        ),
+                      );
 
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text("Utilisateur désactivé"),
-                          backgroundColor: Colors.red,
-                        ));
-                      } catch (e) {
-                        Logger().e("Erreur désactivation", error: e);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text("Erreur lors de la désactivation"),
-                          backgroundColor: Colors.red,
-                        ));
+                      if (choix == 'desactiver') {
+                        try {
+                          await Supabase.instance.client
+                              .from('user')
+                              .update({'is_active': false})
+                              .eq('id', id);
+
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text("Utilisateur désactivé"),
+                            backgroundColor: Colors.red,
+                          ));
+                        } catch (e) {
+                          Logger().e("Erreur désactivation", error: e);
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text("Erreur lors de la désactivation"),
+                            backgroundColor: Colors.red,
+                          ));
+                        }
+                      } else if (choix == 'reactiver') {
+                        try {
+                          await Supabase.instance.client
+                              .from('user')
+                              .update({'is_active': true})
+                              .eq('id', id);
+
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text("Utilisateur réactivé"),
+                            backgroundColor: Colors.green,
+                          ));
+
+                          await chargerTousLesUtilisateurs();
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text("Erreur lors de la réactivation"),
+                            backgroundColor: Colors.red,
+                          ));
+                        }
                       }
                     },
                     icon: Icon(Icons.block),
                     label: Text("Désactiver"),
                     style: ElevatedButton.styleFrom(
-                        elevation: 4,
-                        backgroundColor: Colors.black12,
-                        foregroundColor: Colors.white),
+                      elevation: 2,
+                      backgroundColor: Colors.black12,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -192,11 +237,10 @@ class _ProfilState extends State<Profil> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Color(0xFFFFFFFF),
         shadowColor: Colors.white,
-        //foregroundColor: Color(0xFFFFFFFF),
-        elevation: 10,
+        elevation: 0,
         scrolledUnderElevation: 0,
+        backgroundColor: Colors.white,
         title: Text("Profil de tous les utilisateurs",
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 25)),
         iconTheme: IconThemeData(color: Colors.black),
