@@ -131,7 +131,7 @@ Logger().d(response);
         final arriveeTime = TimeOfDay.fromDateTime(arrivee);
         final departTime = TimeOfDay.fromDateTime(depart);
 
-        if ((arriveeTime.hour > 8 || (arriveeTime.hour == 8 && arriveeTime.minute > 30)) && arriveeTime.hour < 12) {
+        if ((arriveeTime.hour > 8 || (arriveeTime.hour == 8 && arriveeTime.minute > 30))) {
           final retardMinutes = (arriveeTime.hour - 8) * 60 + (arriveeTime.minute - 30);
           retard += 1;
 
@@ -150,9 +150,17 @@ Logger().d(response);
         DateTime(_selectedDate.year, 5, 1), // Fête du travail
         DateTime(_selectedDate.year, 8, 15), // Assomption
         DateTime(_selectedDate.year, 12, 25), // Noël
+        DateTime(_selectedDate.year, 5, 29), // Ascension
+        DateTime(_selectedDate.year, 5, 08), // Victoire 1945
+        DateTime(_selectedDate.year, 6, 09), // Lundi de Pentecôte
+        DateTime(_selectedDate.year, 7, 14), // Fête nationale
+        DateTime(_selectedDate.year, 11, 01), // Toussaint
+        DateTime(_selectedDate.year, 4, 21), // Lundi de Pâques
+        DateTime(_selectedDate.year, 11, 11), // Armistice
       ];
 
-     // permet de calculer les jours ouvrables
+
+      // permet de calculer les jours ouvrables
       List<DateTime> joursOuvrables = [];
 
       for (int i = 0; i <= _selectedEndDate.difference(_selectedDate).inDays; i++) {

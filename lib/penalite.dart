@@ -37,9 +37,9 @@ class RetardService {
       final m = dateHeure.minute;
 
       final estApres0830 = (h > 8) || (h == 8 && m > 30);
-      final estAvantMidi = h < 12;
+     // final estAvantMidi = h < 12;
 
-      if (estApres0830 && estAvantMidi) {
+      if (estApres0830 ) {
         final minutesRetard = (h - 8) * 60 + (m - 30);
         totalMinutesRetard += minutesRetard;
       }

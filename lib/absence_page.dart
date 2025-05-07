@@ -48,16 +48,33 @@ class _AbsencePageState extends State<AbsencePage> {
         return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
       }).toSet();
 
-      // Générer toutes les dates ouvrables (sans samedi/dimanche)
+      // Liste des jours fériés au format 'YYYY-MM-DD'
+      List<String> joursFeries = [
+        '2025-01-01', // Nouvel an
+        '2025-04-21', // Lundi de Pâques
+        '2025-05-01', // Fête du travail
+        '2025-05-08', // Victoire 1945
+        '2025-05-29', // Ascension
+        '2025-06-09', // Lundi de Pentecôte
+        '2025-07-14', // Fête nationale
+        '2025-08-15', // Assomption
+        '2025-11-01', // Toussaint
+        '2025-11-11', // Armistice
+        '2025-12-25', // Noël
+      ];
+
       List<String> toutesLesDates = [];
       for (DateTime d = debutMois;
       d.isBefore(today) || d.isAtSameMomentAs(today);
       d = d.add(Duration(days: 1))) {
-        if (d.weekday != DateTime.saturday && d.weekday != DateTime.sunday) {
-          final dateStr = "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+        String dateStr = "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+        if (d.weekday != DateTime.saturday &&
+            d.weekday != DateTime.sunday &&
+            !joursFeries.contains(dateStr)) {
           toutesLesDates.add(dateStr);
         }
       }
+
 
       // Absences = jours ouvrables sans pointage
       final joursAbsents = toutesLesDates.where((date) => !joursPointes.contains(date)).toList();
