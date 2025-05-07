@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:projets/utilisateur.dart';
 import 'package:projets/constants.dart';
+import 'connect.dart';
 import 'connect_page.dart';
 
 class ProfilEmploye extends StatefulWidget {
@@ -104,7 +105,7 @@ class _ProfilEmployeState extends State<ProfilEmploye> {
   void deconnexion() async {
     await Hive.box('authBox').clear();
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => ConnectPage()),
+      MaterialPageRoute(builder: (_) => Connect()),
           (route) => false,
     );
   }
@@ -179,8 +180,8 @@ class _ProfilEmployeState extends State<ProfilEmploye> {
                     const SizedBox(height: 10),
                     ElevatedButton.icon(
                       onPressed: _pickImageFromGallery,
-                      icon: const Icon(Icons.photo,color: Colors.black,),
-                      label: const Text("Ajouter une photo",style: TextStyle(color: Colors.black),),
+                      icon: const Icon(Icons.photo,color: Colors.white,),
+                      label: const Text("Ajouter une photo",style: TextStyle(color: Colors.white),),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                       ),
@@ -200,8 +201,8 @@ class _ProfilEmployeState extends State<ProfilEmploye> {
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.logout,color: Colors.black,),
-                  label: const Text("Déconnexion",style: TextStyle(color: Colors.black),),
+                  icon: const Icon(Icons.logout,color: Colors.white,),
+                  label: const Text("Déconnexion",style: TextStyle(color: Colors.white),),
                   onPressed: deconnexion,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF2B9BD7),
