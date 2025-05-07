@@ -397,7 +397,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           matchesStatus = _isLate(emp['arrival']);
           break;
         case 'Absents':
-        // Cette condition est gérée séparément en haut
+
           break;
       }
 
@@ -436,6 +436,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             'departure': '', // Masquer l'heure de départ
             'totalMinutes': lateMinutes
           };
+
         }
       }
       return employeePenalties.values.toList();
@@ -478,13 +479,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
           return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
         }).toSet();
 
-        // Générer toutes les dates ouvrables (sans samedi/dimanche)
+        // Liste des jours fériés au format 'YYYY-MM-DD'
+        List<String> joursFeries = [
+          '2025-01-01', // Nouvel an
+          '2025-04-21', // Lundi de Pâques
+          '2025-05-01', // Fête du travail
+          '2025-05-08', // Victoire 1945
+          '2025-05-29', // Ascension
+          '2025-06-09', // Lundi de Pentecôte
+          '2025-07-14', // Fête nationale
+          '2025-08-15', // Assomption
+          '2025-11-01', // Toussaint
+          '2025-11-11', // Armistice
+          '2025-12-25', // Noël
+        ];
+
         List<String> toutesLesDates = [];
         for (DateTime d = debutMois;
         d.isBefore(today) || d.isAtSameMomentAs(today);
         d = d.add(Duration(days: 1))) {
-          if (d.weekday != DateTime.saturday && d.weekday != DateTime.sunday) {
-            final dateStr = "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+          String dateStr = "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+          if (d.weekday != DateTime.saturday &&
+              d.weekday != DateTime.sunday &&
+              !joursFeries.contains(dateStr)) {
             toutesLesDates.add(dateStr);
           }
         }
@@ -510,53 +527,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
       print("Erreur lors du chargement des absences : $e");
       return [];
     }
+
   }
 
-
-
-
-  /*void _showAddAbsenceDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _absenceMotifController,
-                  decoration: const InputDecoration(
-                    labelText: 'Motif de l\'absence',
-                    border: OutlineInputBorder(),
-                    hintText: 'Maladie, congé, etc.',
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Enregistrer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-*/
   void _showValidationDialog(Map<String, dynamic> employee) {
     final hasLate = _isLate(employee['arrival']);
     final hasOvertime = _isOvertime(employee['departure']);
-    //final isAbsent = _isAbsent(employee);
+    final isAbsent = _isAbsent(employee);
     final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
 
     showDialog(
@@ -570,19 +547,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-               /*if (isAbsent) ...[
-                  const Text('DÉTAILS ABSENCE',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                  Text('Date: ${employee['date']}'),
-                  const SizedBox(height: 10),
-                  const Text('Motif fourni:',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(employee['absenceMotif'] ?? 'Aucun motif fourni',
-                      style: const TextStyle(fontStyle: FontStyle.italic)),
-                  const Divider(height: 30),
-                ],
-
-                */
                 if (hasLate) ...[
                   const Text('DÉTAILS RETARD',
                       style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
@@ -618,7 +582,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   TextField(
                     controller: _rejectionController,
                     decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF000000))
+                      ),
                       hintText: 'Motif du rejet',
                     ),
                     maxLines: 3,
@@ -639,7 +605,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   updateStatus(
                     employeeId: employee['id'].toString(),
                      idpointage: employee['idpointage'].toString(), newStatus: 'Rejeté',
-
                   );
                   Navigator.pop(context);
                 },
@@ -738,7 +703,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(
-                        color: Colors.blue,                      ),
+                        color: Colors.blue,
+                      ),
                     );
                   }
                     // Les données sont disponibles
