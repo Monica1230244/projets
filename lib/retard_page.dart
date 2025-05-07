@@ -29,10 +29,15 @@ class _RetardPageState extends State<RetardPage> {
         throw Exception('Utilisateur non trouvé');
       }
 
+      final today = DateTime.now();
+      final debutMois = DateTime(today.year, today.month, 1);
+
       final response = await Supabase.instance.client
           .from('pointage')
           .select()
           .eq('idemploye', user.id)
+          .gte('date_heure', debutMois.toIso8601String())
+          .lte('date_heure', today.toIso8601String())
           .order('date_heure', ascending: false);
 
       final tousLesPointages = List<Map<String, dynamic>>.from(response);
@@ -46,9 +51,9 @@ class _RetardPageState extends State<RetardPage> {
         final m = dateHeure.minute;
 
         final estApres0830 = (h > 8) || (h == 8 && m > 30);
-        final estAvantMidi = h < 12;
+        //final estAvantMidi = h < 12;
 
-        return estApres0830 && estAvantMidi;
+        return estApres0830;
       }).toList();
 
       setState(() {
