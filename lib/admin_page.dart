@@ -127,7 +127,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     if (totalMinutes <= 0) return "0h00mn";
     final hours = totalMinutes ~/ 60;
     final minutes = totalMinutes % 60;
-    return "${hours} h ${minutes.toString().padLeft(2, '0')} mn";
+    return "$hours h ${minutes.toString().padLeft(2, '0')} mn";
   }
   
   static int _calculateLateMinutes(String arrivalTime) {
@@ -140,7 +140,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   int calculerPenalite(int lateMinutes) {
-Logger().i(lateMinutes);
+//Logger().i(lateMinutes);
     int penaliteTotale = (lateMinutes ~/ 10) * 5000;  // Calcul de la pénalité totale
     return penaliteTotale;
   }
@@ -422,17 +422,19 @@ Logger().i(lateMinutes);
         final String employeeId = emp['id'].toString();
         final int lateMinutes = _calculateLateMinutes(emp['arrival']);
         final int penaltyAmount = calculerPenalite(lateMinutes);
+        Logger().w("emp['arrival'] ${emp['nom']}, (emp['arrival'] ${emp['arrival']}, lateMinutes $lateMinutes, penaltyAmount $penaltyAmount");
 
         if (employeePenalties.containsKey(employeeId)) {
-          employeePenalties[employeeId]!['total'] += penaltyAmount;
+          employeePenalties[employeeId]!['totalMinutes'] += lateMinutes;
+          employeePenalties[employeeId]!['total'] = calculerPenalite(employeePenalties[employeeId]!['totalMinutes']);
         } else {
           employeePenalties[employeeId] = {
             ...emp,
             'total': penaltyAmount,
             'type': 'Pénalité',
-            'date': '',
             'arrival': '', // Masquer l'heure d'arrivée
             'departure': '', // Masquer l'heure de départ
+            'totalMinutes': lateMinutes
           };
         }
       }
@@ -493,7 +495,7 @@ Logger().i(lateMinutes);
         // Ajouter les absences à la liste
         for (final jourAbsent in joursAbsents) {
           absencesList.add({
-
+            'avatar': Icons.person,
             'nom': userName,
             'type': 'Absent',
             'date': jourAbsent,
@@ -637,6 +639,7 @@ Logger().i(lateMinutes);
                   updateStatus(
                     employeeId: employee['id'].toString(),
                      idpointage: employee['idpointage'].toString(), newStatus: 'Rejeté',
+
                   );
                   Navigator.pop(context);
                 },
@@ -690,10 +693,10 @@ Logger().i(lateMinutes);
       })
           .eq('idemploye', employeeId)
            .eq('id',idpointage);
-Logger().i(idpointage);
+      await _fetchAllData();
 
+      Logger().i(idpointage);
       Logger().i('Statut employé $employeeId mis à jour: $newStatus');
-
     } catch (e) {
       Logger().e('Erreur mise à jour statut employé: $e');
       throw Exception('Erreur lors de la mise à jour du statut');
@@ -735,9 +738,7 @@ Logger().i(idpointage);
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue), // Couleur bleue pour l'indicateur de chargement
-                      ),
+                        color: Colors.blue,                      ),
                     );
                   }
                     // Les données sont disponibles
