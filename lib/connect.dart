@@ -27,7 +27,6 @@ class ConnectPageState extends State<Connect> {
   @override
   void initState() {
     super.initState();
-    login();
   }
 
   // mot de passe crypté
@@ -48,7 +47,7 @@ class ConnectPageState extends State<Connect> {
       //deux variables déclarées
       String email = emailController.text.trim();
       String mdp = mdpController.text.trim();
-      //verfier si tous les chmaps sont remplis
+      //verfier si tous les champs sont remplis
       if (email.isEmpty || mdp.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -233,6 +232,7 @@ class ConnectPageState extends State<Connect> {
                                         TextEditingController pwdController =
                                             TextEditingController();
                                         return AlertDialog(
+                                          backgroundColor: Colors.white,
                                           title: Text("Nouveau mot de passe"),
                                           content: TextField(
                                             controller: pwdController,
@@ -285,8 +285,7 @@ class ConnectPageState extends State<Connect> {
                                                  await Supabase.instance.client
                                                       .from('user')
                                                       .update(updatedData)
-                                                     .eq('email',
-                                                     {'email' :emailUser.trim()});
+                                                     .eq('email',emailUser.trim());
 
                                                   ScaffoldMessenger.of(
                                                     context,
@@ -318,7 +317,18 @@ class ConnectPageState extends State<Connect> {
                                                   );
                                                 }
                                               },
-                                              child: Text(
+                                              child: _isLoading
+                                                  ? SizedBox(
+                                                width: 15,
+                                                height: 15,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 3,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                                    Colors.blue,
+                                                  ),
+                                                ),
+                                              )
+                                                  : Text(
                                                 "Modifier",
                                                 style: TextStyle(
                                                   color: primaryColor,
@@ -338,7 +348,18 @@ class ConnectPageState extends State<Connect> {
                                     );
                                   }
                                 },
-                                child: Text(
+                                child: _isLoading
+                                    ? SizedBox(
+                                  width: 15,
+                                  height: 15,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.blue,
+                                    ),
+                                  ),
+                                )
+                                    :Text(
                                   "Valider",
                                   style: TextStyle(color: primaryColor),
                                 ),
@@ -376,7 +397,18 @@ class ConnectPageState extends State<Connect> {
                 },
 
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-                child: Text('Envoyer', style: TextStyle(color: primaryColor)),
+                child: _isLoading
+                    ? SizedBox(
+                  width: 15,
+                  height: 15,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.blue,
+                    ),
+                  ),
+                )
+                    :Text('Envoyer', style: TextStyle(color: primaryColor)),
               ),
             ],
           ),
@@ -480,7 +512,7 @@ class ConnectPageState extends State<Connect> {
               ),
               SizedBox(height: 120),
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: Row(
                   children: [
                     Text(
