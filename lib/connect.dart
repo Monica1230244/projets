@@ -1,4 +1,5 @@
 import 'package:crypt/crypt.dart';
+import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
@@ -8,22 +9,28 @@ import 'package:projets/utilisateur.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-
 class Connect extends StatefulWidget {
   @override
   State<Connect> createState() => ConnectPageState();
 }
-final Uri _url = Uri.parse("mailto:contact@waouhmonde.com?subject=Demande d'assistance pour la création de compte&body=Bonjour,Je rencontre des difficultés pour créer un compte sur votre plateforme et j'aurais besoin de votre assistance pour finaliser la procédure. Pourriez-vous m'indiquer les étapes à suivre ?Je vous remercie par avance pour votre aide.%20");
+
+final Uri _url = Uri.parse(
+  "mailto:contact@waouhmonde.com?subject=Demande d'assistance pour la création de compte&body=Bonjour,Je rencontre des difficultés pour créer un compte sur votre plateforme et j'aurais besoin de votre assistance pour finaliser la procédure. Pourriez-vous m'indiquer les étapes à suivre ?Je vous remercie par avance pour votre aide.%20",
+);
+
 class ConnectPageState extends State<Connect> {
   TextEditingController emailController = TextEditingController();
   TextEditingController mdpController = TextEditingController();
+  String  emailUser="";
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    login();
   }
-// mot de passe crypté
+
+  // mot de passe crypté
   String hashPassword(String password) {
     return Crypt.sha512(
       password,
@@ -41,7 +48,7 @@ class ConnectPageState extends State<Connect> {
       //deux variables déclarées
       String email = emailController.text.trim();
       String mdp = mdpController.text.trim();
-//verfier si tous les chmaps sont remplis
+      //verfier si tous les chmaps sont remplis
       if (email.isEmpty || mdp.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -55,12 +62,12 @@ class ConnectPageState extends State<Connect> {
       String hashedPassword = hashPassword(mdp);
       // requete pour verifier si un utilisateur a le meme email et mdp crypte qui est renseigné
       final supabaseResponse =
-      await Supabase.instance.client
-          .from('user')
-          .select()
-          .eq('email', email)
-          .eq('motpasse', hashedPassword)
-          .maybeSingle();
+          await Supabase.instance.client
+              .from('user')
+              .select()
+              .eq('email', email)
+              .eq('motpasse', hashedPassword)
+              .maybeSingle();
       Logger().i("Réponse Supabase: $supabaseResponse");
 
       if (supabaseResponse != null) {
@@ -77,7 +84,9 @@ class ConnectPageState extends State<Connect> {
           if (supabaseResponse['is_active'] == false) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("Votre compte est désactivé. Veuillez contacter l'administrateur."),
+                content: Text(
+                  "Votre compte est désactivé. Veuillez contacter l'administrateur.",
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -107,93 +116,274 @@ class ConnectPageState extends State<Connect> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
       );
-    }finally {
+    } finally {
       setState(() {
         _isLoading = false;
       });
     }
   }
-//methode pour reinitialiser un mdp oublié
+
+  //methode pour reinitialiser un mdp oublié
   void _handleForgotPassword() {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
             backgroundColor: Colors.white,
-        title: Text('Réinitialisation du mot de passe'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Entrez votre email pour recevoir un lien de réinitialisation :',
-            ),
-            SizedBox(height: 10),
-            TextField(
-              controller: TextEditingController(text: emailController.text),
-              decoration: InputDecoration(
-                hintText: 'Votre email',
-                border: OutlineInputBorder(
+            title: Text('Réinitialisation du mot de passe'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Entrez votre email pour recevoir un lien de réinitialisation :',
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.black, width: 1.5),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: primaryColor, width: 2.0),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Annuler', style: TextStyle(color: primaryColor),),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final email = emailController.text.trim();
-              if (email.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Veuillez entrer un email valide'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-
-              try {
-                await Supabase.instance.client.auth.resetPasswordForEmail(
-                  email,
-                );
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Un email de réinitialisation a été envoyé à $email',
+                SizedBox(height: 10),
+                TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    hintText: 'Votre email',
+                    border: OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.black, width: 1.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: primaryColor, width: 2.0),
                     ),
                   ),
-                );
-              } catch (e) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Erreur lors de l\'envoi: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-            child: Text('Envoyer',style: TextStyle(color:primaryColor),),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Annuler', style: TextStyle(color: primaryColor)),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final email = emailController.text.trim();
+
+                  if (email.isEmpty || !email.contains('@')) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Veuillez entrer un email valide'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  try {
+                    // 1. Envoi du code OTP
+                    // final res  = await Supabase.instance.client.auth.signInWithOtp(email: email, shouldCreateUser: false);
+                    final res = await EmailOTP.sendOTP(email: email);
+                    // 2. Demander le code reçu par email
+                    if (res) {
+                      setState(() {
+                        emailUser = email;
+                      });
+                      Navigator.pop(context);
+                      await showDialog<String>(
+                        context: context,
+                        builder: (context) {
+                          TextEditingController codeController =
+                              TextEditingController();
+                          return AlertDialog(
+                            title: Text("Entrez le code reçu"),
+                            content: TextField(
+                              controller: codeController,
+                              decoration: InputDecoration(
+                                hintText: "Code à 6 chiffres",
+                                border: OutlineInputBorder(),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(
+                                    color: Colors.black,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(
+                                    color: primaryColor,
+                                    width: 2.0,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, null),
+                                child: Text(
+                                  "Annuler",
+                                  style: TextStyle(color: primaryColor),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final res = EmailOTP.verifyOTP(
+                                    otp: codeController.text.trim(),
+                                  );
+                                  if (res) {
+                                    Navigator.pop(context);
+                                    await showDialog<String>(
+                                      context: context,
+                                      builder: (context) {
+                                        TextEditingController pwdController =
+                                            TextEditingController();
+                                        return AlertDialog(
+                                          title: Text("Nouveau mot de passe"),
+                                          content: TextField(
+                                            controller: pwdController,
+                                            obscureText: true,
+                                            decoration: InputDecoration(
+                                              hintText:
+                                                  "Saisir nouveau mot de passe",
+                                              border: OutlineInputBorder(),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                borderSide: BorderSide(
+                                                  color: Colors.black,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                borderSide: BorderSide(
+                                                  color: primaryColor,
+                                                  width: 2.0,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(
+                                                    context,
+                                                    null,
+                                                  ),
+                                              child: Text(
+                                                "Annuler",
+                                                style: TextStyle(
+                                                  color: primaryColor,
+                                                ),
+                                              ),
+                                            ),
+                                            TextButton(
+                                              onPressed: () async {
+                                                final updatedData = {
+                                                  'motpasse':
+                                                  hashPassword(pwdController.text.trim()) ,
+                                                };
+
+                                                try {
+                                                  Logger().i(emailUser);
+                                                 await Supabase.instance.client
+                                                      .from('user')
+                                                      .update(updatedData)
+                                                     .eq('email',
+                                                     {'email' :emailUser.trim()});
+
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        "Mise à jour réussie",
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.green,
+                                                    ),
+                                                  );
+
+                                                  Navigator.pop(
+                                                    context
+                                                  ); // Retour avec succès
+                                                } catch (e) {
+                                                  Logger().e(e.toString());
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text("Erreur lors de la mise à jour"
+                                                        ,
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                              child: Text(
+                                                "Modifier",
+                                                style: TextStyle(
+                                                  color: primaryColor,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Code incorrect."),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Text(
+                                  "Valider",
+                                  style: TextStyle(color: primaryColor),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
+
+                    /*if (code == null || code.isEmpty) return;
+
+                // 3. Vérification du code OTP
+                await Supabase.instance.client.auth.verifyOTP(
+                  email: email,
+                  token: code,
+                  type: OtpType.email,
+                );*/
+
+                    Navigator.pop(context); // Fermer la boîte principale
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Mot de passe réinitialisé avec succès."),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Erreur : $e"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                child: Text('Envoyer', style: TextStyle(color: primaryColor)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
-//formulaire pour renseigner les informations
+
+  //formulaire pour renseigner les informations
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -232,36 +422,42 @@ class ConnectPageState extends State<Connect> {
                   ),
                   SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () async{
-                      if(!_isLoading){
+                    onPressed: () async {
+                      if (!_isLoading) {
                         await login();
                       }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
-                      padding: EdgeInsets.symmetric(horizontal: 115, vertical: 18),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 115,
+                        vertical: 18,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                       elevation: 5,
                     ),
-                    child: _isLoading
-                        ? SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                        : Text(
-                      'Se connecter',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child:
+                        _isLoading
+                            ? SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                            : Text(
+                              'Se connecter',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                   ),
                   SizedBox(height: 10),
                   Row(
@@ -271,7 +467,11 @@ class ConnectPageState extends State<Connect> {
                         onPressed: _handleForgotPassword,
                         child: Text(
                           'Mot de passe oublié ?',
-                          style: TextStyle(color: primaryColor , fontWeight:FontWeight.bold , fontSize: 18),
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
                     ],
@@ -283,7 +483,10 @@ class ConnectPageState extends State<Connect> {
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
                   children: [
-                    Text("Vous n'avez pas de compte ?" , style: TextStyle(  fontWeight:FontWeight.bold ),),
+                    Text(
+                      "Vous n'avez pas de compte ?",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     TextButton(
                       onPressed: _launchUrl,
                       child: RichText(
@@ -295,10 +498,7 @@ class ConnectPageState extends State<Connect> {
                           children: [
                             TextSpan(
                               text: 'Contacter l\'administrateur !',
-                              style: TextStyle(
-                                color: primaryColor,
-
-                              ),
+                              style: TextStyle(color: primaryColor),
                             ),
                           ],
                         ),
@@ -306,7 +506,7 @@ class ConnectPageState extends State<Connect> {
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -315,11 +515,11 @@ class ConnectPageState extends State<Connect> {
   }
 
   Widget _buildTextField(
-      String label,
-      IconData icon,
-      TextEditingController controller, {
-        bool isPassword = false,
-      }) {
+    String label,
+    IconData icon,
+    TextEditingController controller, {
+    bool isPassword = false,
+  }) {
     return TextField(
       controller: controller,
       cursorColor: Colors.blue,
@@ -327,7 +527,7 @@ class ConnectPageState extends State<Connect> {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey),
-        prefixIcon: Icon(icon, color:primaryColor ),
+        prefixIcon: Icon(icon, color: primaryColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey.shade200),
@@ -352,5 +552,3 @@ Future<void> _launchUrl() async {
     throw Exception('Impossible de lancer $_url');
   }
 }
-
-

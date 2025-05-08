@@ -1,3 +1,4 @@
+import 'package:email_otp/email_otp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive/hive.dart';
@@ -27,6 +28,12 @@ Future<void> main() async {
   }
   await Hive.openBox('authBox');
   await Hive.openBox('users');
+
+  EmailOTP.config(
+      appName: 'Waouh Monde',
+      otpType: OTPType.numeric,
+      emailTheme: EmailTheme.v4,
+  );
 
   runApp(const MyApp());
 }
