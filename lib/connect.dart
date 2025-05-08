@@ -13,7 +13,7 @@ class Connect extends StatefulWidget {
   @override
   State<Connect> createState() => ConnectPageState();
 }
-final Uri _url = Uri.parse("mailto:smith@example.org?subject=Demande d'assistance pour la création de compte&body=Bonjour,Je rencontre des difficultés pour créer un compte sur votre plateforme et j'aurais besoin de votre assistance pour finaliser la procédure. Pourriez-vous m'indiquer les étapes à suivre ?Je vous remercie par avance pour votre aide.%20");
+final Uri _url = Uri.parse("mailto:contact@waouhmonde.com?subject=Demande d'assistance pour la création de compte&body=Bonjour,Je rencontre des difficultés pour créer un compte sur votre plateforme et j'aurais besoin de votre assistance pour finaliser la procédure. Pourriez-vous m'indiquer les étapes à suivre ?Je vous remercie par avance pour votre aide.%20");
 class ConnectPageState extends State<Connect> {
   TextEditingController emailController = TextEditingController();
   TextEditingController mdpController = TextEditingController();
@@ -119,6 +119,7 @@ class ConnectPageState extends State<Connect> {
       context: context,
       builder:
           (context) => AlertDialog(
+            backgroundColor: Colors.white,
         title: Text('Réinitialisation du mot de passe'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -131,7 +132,16 @@ class ConnectPageState extends State<Connect> {
               controller: TextEditingController(text: emailController.text),
               decoration: InputDecoration(
                 hintText: 'Votre email',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.black, width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: primaryColor, width: 2.0),
+                ),
               ),
             ),
           ],
@@ -139,7 +149,7 @@ class ConnectPageState extends State<Connect> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Annuler'),
+            child: Text('Annuler', style: TextStyle(color: primaryColor),),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -176,8 +186,8 @@ class ConnectPageState extends State<Connect> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-            child: Text('Envoyer'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+            child: Text('Envoyer',style: TextStyle(color:primaryColor),),
           ),
         ],
       ),
@@ -266,7 +276,6 @@ class ConnectPageState extends State<Connect> {
                       ),
                     ],
                   ),
-
                 ],
               ),
               SizedBox(height: 120),

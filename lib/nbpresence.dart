@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projets/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -164,8 +165,8 @@ class _Top10PresencesPageState extends State<Top10PresencesPage> {
                   margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                   child: ListTile(
                     leading: CircleAvatar(
-                      child: Text('${index + 1}', style: TextStyle(color: Colors.black)),
-                      backgroundColor: Colors.black26,
+                      child: Text('${index + 1}', style: TextStyle(color: Colors.white)),
+                      backgroundColor:primaryColor,
                     ),
                     title: Text(
                       '${employe['prenom']} ${employe['nom']}',
