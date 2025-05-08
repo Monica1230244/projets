@@ -5,6 +5,8 @@ import 'package:logger/logger.dart';
 import 'package:projets/utilisateur.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'constants.dart';
+
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
@@ -116,7 +118,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return 'Heures Supp';
       }
       return 'Départ';
-    } else if (type == 'Absence') {
+    } else if (type == 'Absent') {
       return 'Absent';
     }
 
@@ -144,8 +146,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     int penaliteTotale = (lateMinutes ~/ 10) * 5000;  // Calcul de la pénalité totale
     return penaliteTotale;
   }
-
-
   String _calculateHeuresSupp(String departure) {
     if (departure.isEmpty) return '';
     try {
@@ -188,16 +188,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   bool _isAbsent(Map<String, dynamic> employee) {
-    return employee['status'] == 'Absent';
+    return employee['type'] == 'Absence';
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _searchQuery = '';
-      _selectedDateRange = null;
-    });
-  }
 
   Widget _buildFilterSection() {
     return Column(
@@ -284,7 +277,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       initialDateRange: _selectedDateRange,
                       locale: const Locale('fr', 'FR'),
                     );
-
                     if (picked != null) {
                       setState(() {
                         _selectedDateRange = picked;
@@ -372,56 +364,66 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Future<List<Map<String, dynamic>>> get filteredEmployees async {
+    List<Map<String, dynamic>> baseList = _employees;
+
+    // Cas spécial pour les absences
     if (_selectedFilter == 'Absents') {
-      // Appeler la méthode pour récupérer les absences de tous les utilisateurs
-      return await _getAllAbsences();
+      baseList = await _getAllAbsences();
     }
 
-    var filtered = _employees.where((emp) {
+    // Appliquer les filtres communs
+    final filteredList = baseList.where((emp) {
+      // Filtre par statut
       bool matchesStatus = true;
-
-      switch (_selectedFilter) {
-        case 'Arrivée':
-          matchesStatus = emp['type'] == 'Arrivée';
-          break;
-        case 'Départ':
-          matchesStatus = emp['type'] == 'Départ';
-          break;
-        case 'Retards':
-          matchesStatus = _isLate(emp['arrival']);
-          break;
-        case 'Heures Supp':
-          matchesStatus = emp['type'].contains('Heures Supp');
-          break;
-        case 'Pénalité':
-          matchesStatus = _isLate(emp['arrival']);
-          break;
-        case 'Absents':
-
-          break;
+      if (_selectedFilter != 'Absents') {
+        switch (_selectedFilter) {
+          case 'Arrivée':
+            matchesStatus = emp['type'] == 'Arrivée';
+            break;
+          case 'Départ':
+            matchesStatus = emp['type'] == 'Départ';
+            break;
+          case 'Retards':
+            matchesStatus = _isLate(emp['arrival']);
+            break;
+          case 'Heures Supp':
+            matchesStatus = emp['type'].contains('Heures Supp');
+            break;
+          case 'Pénalité':
+            matchesStatus = _isLate(emp['arrival']);
+            break;
+        }
       }
 
+      // Filtre par nom
       final nameMatch = _searchQuery.isEmpty ||
           emp['nom'].toLowerCase().contains(_searchQuery.toLowerCase());
 
+      // Filtre par date
       bool dateMatch = true;
       if (_selectedDateRange != null) {
-        final empDate = DateFormat('dd MMMM yyyy', 'fr_FR').parse(emp['date']);
-        dateMatch = empDate.isAfter(_selectedDateRange!.start.subtract(const Duration(days: 1))) &&
-            empDate.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
+        try {
+          final empDate = emp['date_heure'] is DateTime
+              ? emp['date_heure']
+              : DateFormat('dd MMMM yyyy', 'fr_FR').parse(emp['date']);
+          dateMatch = empDate.isAfter(_selectedDateRange!.start.subtract(const Duration(days: 1))) &&
+              empDate.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
+        } catch (e) {
+          dateMatch = false;
+        }
       }
 
       return matchesStatus && nameMatch && dateMatch;
     }).toList();
 
-    // Calcul des pénalités totales par personne
+    // Traitement spécial pour les pénalités
     if (_selectedFilter == 'Pénalité') {
       final Map<String, Map<String, dynamic>> employeePenalties = {};
-
-      for (var emp in filtered) {
+      for (var emp in filteredList) {
         final String employeeId = emp['id'].toString();
         final int lateMinutes = _calculateLateMinutes(emp['arrival']);
         final int penaltyAmount = calculerPenalite(lateMinutes);
+
         Logger().w("emp['arrival'] ${emp['nom']}, (emp['arrival'] ${emp['arrival']}, lateMinutes $lateMinutes, penaltyAmount $penaltyAmount");
 
         if (employeePenalties.containsKey(employeeId)) {
@@ -432,27 +434,23 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ...emp,
             'total': penaltyAmount,
             'type': 'Pénalité',
-            'arrival': '', // Masquer l'heure d'arrivée
-            'departure': '', // Masquer l'heure de départ
+            'arrival': '',
+            'departure': '',
             'totalMinutes': lateMinutes
           };
-
         }
       }
       return employeePenalties.values.toList();
     }
-    return filtered;
+
+    return filteredList;
   }
+
   Future<List<Map<String, dynamic>>> _getAllAbsences() async {
     try {
-      // Récupérer tous les utilisateurs
-      final responseUsers = await Supabase.instance.client
+      final responseUsers = await _supabase
           .from('user')
           .select('id, nom, prenom');
-
-      if (responseUsers.isEmpty) {
-        throw Exception('Aucun utilisateur trouvé');
-      }
 
       final users = List<Map<String, dynamic>>.from(responseUsers);
       final today = DateTime.now();
@@ -463,8 +461,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         final userId = user['id'];
         final userName = '${user['prenom']} ${user['nom']}';
 
-        // Récupérer les jours de présence dans Supabase pour cet utilisateur
-        final response = await Supabase.instance.client
+        final response = await _supabase
             .from('pointage')
             .select('date_heure')
             .eq('idemploye', userId)
@@ -472,68 +469,63 @@ class _AdminDashboardState extends State<AdminDashboard> {
             .lte('date_heure', today.toIso8601String());
 
         final pointages = List<Map<String, dynamic>>.from(response);
-
-        // Jours où l'employé a pointé (au format yyyy-MM-dd)
         final joursPointes = pointages.map((e) {
           final date = DateTime.parse(e['date_heure']).toLocal();
-          return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+          return DateTime(date.year, date.month, date.day);
         }).toSet();
 
-        // Liste des jours fériés au format 'YYYY-MM-DD'
-        List<String> joursFeries = [
-          '01-01-2025', // Nouvel an
-          '21-04-2025', // Lundi de Pâques
-          '01-05-2025', // Fête du travail
-          '08-05-2025', // Victoire 1945
-          '29-05-2025', // Ascension
-          '09-06-2025', // Lundi de Pentecôte
-          '14-07-2025', // Fête nationale
-          '15-08-2025', // Assomption
-          '01-11-2025', // Toussaint
-          '11-11-2025', // Armistice
-          '25-12-2025', // Noël
-        ];
-
-        List<String> toutesLesDates = [];
+        // Générer toutes les dates du mois
         for (DateTime d = debutMois;
         d.isBefore(today) || d.isAtSameMomentAs(today);
-        d = d.add(Duration(days: 1))) {
-          String dateStr = "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+        d = d.add(const Duration(days: 1))) {
+
           if (d.weekday != DateTime.saturday &&
               d.weekday != DateTime.sunday &&
-              !joursFeries.contains(dateStr)) {
-            toutesLesDates.add(dateStr);
+              !_isJourFerie(d) &&
+              !joursPointes.contains(DateTime(d.year, d.month, d.day))) {
+
+            absencesList.add({
+              'id': userId,
+              'avatar': Icons.person,
+              'nom': userName,
+              'type': 'Absent',
+              'date': DateFormat('dd MMMM yyyy', 'fr_FR').format(d),
+              'date_heure': d, // Important pour le filtrage
+              'arrival': '',
+              'departure': '',
+              'statut': 'Absent'
+            });
           }
         }
-
-        // Absences = jours ouvrables sans pointage
-        final joursAbsents = toutesLesDates.where((date) => !joursPointes.contains(date)).toList();
-
-        // Ajouter les absences à la liste
-        for (final jourAbsent in joursAbsents) {
-          absencesList.add({
-            'avatar': Icons.person,
-            'nom': userName,
-            'type': 'Absent',
-            'date': jourAbsent,
-            'arrival': '', // Masquer l'heure d'arrivée
-            'departure': '', // Masquer l'heure de départ
-          });
-        }
       }
-
       return absencesList;
     } catch (e) {
-      print("Erreur lors du chargement des absences : $e");
+      Logger().e('Erreur dans _getAllAbsences: $e');
       return [];
     }
+  }
 
+  bool _isJourFerie(DateTime date) {
+    // Liste des jours fériés au format 'YYYY-MM-DD'
+    List<String> joursFeries = [
+      '01-01-2025', // Nouvel an
+      '21-04-2025', // Lundi de Pâques
+      '01-05-2025', // Fête du travail
+      '08-05-2025', // Victoire 1945
+      '29-05-2025', // Ascension
+      '09-06-2025', // Lundi de Pentecôte
+      '14-07-2025', // Fête nationale
+      '15-08-2025', // Assomption
+      '01-11-2025', // Toussaint
+      '11-11-2025', // Armistice
+      '25-12-2025', // Noël
+    ];
+    return false;
   }
 
   void _showValidationDialog(Map<String, dynamic> employee) {
     final hasLate = _isLate(employee['arrival']);
     final hasOvertime = _isOvertime(employee['departure']);
-    final isAbsent = _isAbsent(employee);
     final lateMinutes = hasLate ? _calculateLateMinutes(employee['arrival']) : 0;
 
     showDialog(
@@ -581,11 +573,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       style: TextStyle(fontStyle: FontStyle.italic)),
                   TextField(
                     controller: _rejectionController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF000000))
-                      ),
+                    decoration: InputDecoration(
                       hintText: 'Motif du rejet',
+                      border: const OutlineInputBorder(
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: primaryColor, width: 2.0),
+                      ),
                     ),
                     maxLines: 3,
                   ),
