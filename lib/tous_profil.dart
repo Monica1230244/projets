@@ -67,6 +67,17 @@ class _ProfilState extends State<Profil> {
       return 'Non spécifié';
     }
   }
+
+  String _formatPhoneNumber(String phone) {
+    if ( phone.isEmpty) return 'Non spécifié';
+
+    final tel = phone.toString();
+
+    if (tel.length == 8) return "01$tel";
+    if (tel.length == 9) return "0$tel";
+    return tel;
+  }
+
   Widget _buildUserCard(Map<String, dynamic> user) {
     return Card(
       shadowColor: Colors.white,
@@ -103,7 +114,7 @@ class _ProfilState extends State<Profil> {
           ],
         ),
         children: [
-            _buildRow("Téléphone", user['tel']?.toString() ?? ''),
+            _buildRow("Téléphone",_formatPhoneNumber(user['tel'].toString()) ?? ''),
             _buildRow("Adresse", user['adresse'] ?? ''),
             _buildRow("Date de naissance", user['datenaissance'] ?? ''),
             _buildRow("Email", user['email'] ?? ''),

@@ -32,8 +32,7 @@ class Users extends HiveObject {
   String adresse;
 
   @HiveField(9)
-  int tel;
-
+  String tel;
 
 
   Users({required this.email,
@@ -49,20 +48,22 @@ class Users extends HiveObject {
   });
 
 
-
   factory Users.fromSupabase(Map<String, dynamic> data) {
     return Users(
-      email: data['email'],
-      id: data['id'],
-      nom: data['nom'],
-      prenom: data['prenom'],
-      poste: data['idposte'],
-      createdAt: data['created_at'],
-      type: data['idtype'],
-      datenaissance: data['datenaissance'],
-      adresse: data['adresse'],
-      tel: data['tel'],
-
+        email: data['email'],
+        id: data['id'],
+        nom: data['nom'],
+        prenom: data['prenom'],
+        poste: data['idposte'],
+        createdAt: data['created_at'],
+        type: data['idtype'],
+        datenaissance: data['datenaissance'],
+        adresse: data['adresse'],
+        tel: (data['tel']
+            .toString()
+            .length == 8) ? "01${data['tel']}" : (data['tel']
+            .toString()
+            .length == 9) ? "0${data['tel']}":data['tel']
     );
   }
 

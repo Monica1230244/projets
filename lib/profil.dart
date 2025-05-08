@@ -122,6 +122,15 @@ class _ProfilEmployeState extends State<ProfilEmploye> {
       return 'Non spécifié';
     }
   }
+  String _formatPhoneNumber(String phone) {
+    if ( phone.isEmpty) return 'Non spécifié';
+
+    final tel = phone.toString();
+
+    if (tel.length == 8) return "01$tel";
+    if (tel.length == 9) return "0$tel";
+    return tel;
+  }
 
   Widget _buildRow(String label, String value) {
     return Padding(
@@ -192,7 +201,7 @@ class _ProfilEmployeState extends State<ProfilEmploye> {
               const SizedBox(height: 30),
               _buildRow("Nom", employeData?['nom']?.toString() ?? 'Non spécifié'),
               _buildRow("Prénom", employeData?['prenom']?.toString() ?? 'Non spécifié'),
-              _buildRow("Téléphone", employeData?['tel']?.toString() ?? 'Non spécifié'),
+              _buildRow("Téléphone",_formatPhoneNumber( employeData?['tel']?.toString()??'Non spécifié')),
               _buildRow("Adresse", employeData?['adresse']?.toString() ?? 'Non spécifié'),
               _buildRow("Date de naissance", employeData?['datenaissance']?.toString() ?? 'Non spécifié'),
               _buildRow("Email", employeData?['email']?.toString() ?? 'Non spécifié'),

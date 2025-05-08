@@ -26,7 +26,7 @@ class UsersAdapter extends TypeAdapter<Users> {
       type: fields[6] as String,
       datenaissance: fields[7] as String,
       adresse: fields[8] as String,
-      tel: fields[9] as int,
+      tel: fields[9] as String,
     );
   }
 
