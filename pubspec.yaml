@@ -24,6 +24,7 @@ dependencies:
   table_calendar: ^3.0.9
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.8.4
+  email_otp: ^3.0.2
 
 dev_dependencies:
   flutter_test:
