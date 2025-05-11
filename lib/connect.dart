@@ -23,6 +23,8 @@ class ConnectPageState extends State<Connect> {
   TextEditingController mdpController = TextEditingController();
   String  emailUser="";
   bool _isLoading = false;
+  bool _obscurePassword = true;
+
 
   @override
   void initState() {
@@ -191,6 +193,7 @@ class ConnectPageState extends State<Connect> {
                           return AlertDialog(
                             title: Text("Entrez le code reçu"),
                             content: TextField(
+                              obscureText: true,
                               controller: codeController,
                               decoration: InputDecoration(
                                 hintText: "Code à 6 chiffres",
@@ -370,15 +373,6 @@ class ConnectPageState extends State<Connect> {
                       );
                     }
 
-                    /*if (code == null || code.isEmpty) return;
-
-                // 3. Vérification du code OTP
-                await Supabase.instance.client.auth.verifyOTP(
-                  email: email,
-                  token: code,
-                  type: OtpType.email,
-                );*/
-
                     Navigator.pop(context); // Fermer la boîte principale
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -547,19 +541,32 @@ class ConnectPageState extends State<Connect> {
   }
 
   Widget _buildTextField(
-    String label,
-    IconData icon,
-    TextEditingController controller, {
-    bool isPassword = false,
-  }) {
+      String label,
+      IconData icon,
+      TextEditingController controller, {
+        bool isPassword = false,
+      }) {
     return TextField(
       controller: controller,
       cursorColor: Colors.blue,
-      obscureText: isPassword,
+      obscureText: isPassword ? _obscurePassword : false,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey),
         prefixIcon: Icon(icon, color: primaryColor),
+        suffixIcon: isPassword
+            ? IconButton(
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+            color: Colors.grey,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscurePassword = !_obscurePassword;
+            });
+          },
+        )
+            : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey.shade200),
@@ -579,7 +586,8 @@ class ConnectPageState extends State<Connect> {
   }
 }
 
-Future<void> _launchUrl() async {
+
+  Future<void> _launchUrl() async {
   if (!await launchUrl(_url)) {
     throw Exception('Impossible de lancer $_url');
   }

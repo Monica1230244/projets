@@ -12,7 +12,7 @@ import 'package:projets/connect_admin.dart';
 
 import 'connect.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
@@ -30,27 +30,33 @@ Future<void> main() async {
   await Hive.openBox('users');
 
   EmailOTP.config(
-      appName: 'Waouh Monde',
-      otpType: OTPType.numeric,
-      emailTheme: EmailTheme.v4,
+    appName: 'Waouh Monde',
+    otpType: OTPType.numeric,
+    emailTheme: EmailTheme.v4,
   );
+  // verifier si l'utilisateur est toujours connecté
+  final authBox = Hive.box('authBox');
+  final Users? user = authBox.get('stocker_user') as Users?;
 
-  runApp(const MyApp());
+  runApp(MyApp(isConnect: user != null));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isConnect;
+
+  const MyApp({super.key, required this.isConnect});
 
   @override
   Widget build(BuildContext context) {
     initializeDateFormatting('fr_FR', null);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         textSelectionTheme: const TextSelectionThemeData(
-          selectionColor: AppColor.backgroundForm, // Couleur de la sélection
-          selectionHandleColor: AppColor.backgroundForm, // Couleur des poignées
-          cursorColor: AppColor.backgroundForm, // Couleur du curseur
+          selectionColor: AppColor.backgroundForm,
+          selectionHandleColor: AppColor.backgroundForm,
+          cursorColor: AppColor.backgroundForm,
         ),
       ),
       localizationsDelegates: const [
@@ -59,10 +65,11 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('fr', 'FR')],
-      home: Connect(),
+      home: isConnect ? Accueil() : Connect(),
     );
   }
 }
+
 class AppColor {
   static const Color backgroundForm = Color(0xFF2B9BD7);
 }
