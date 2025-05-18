@@ -143,38 +143,46 @@ Logger().d(response);
           heuresSupp += minutesSupp;
         }
       });
+      final List<DateTime> joursFeries = [];
 
-      // les  jours fériés
-      final List<DateTime> joursFeries = [
-        DateTime(_selectedDate.year, 1, 1), // Nouvel an
-        DateTime(_selectedDate.year, 5, 1), // Fête du travail
-        DateTime(_selectedDate.year, 8, 15), // Assomption
-        DateTime(_selectedDate.year, 12, 25), // Noël
-        DateTime(_selectedDate.year, 5, 29), // Ascension
-        DateTime(_selectedDate.year, 5, 08), // Victoire 1945
-        DateTime(_selectedDate.year, 6, 09), // Lundi de Pentecôte
-        DateTime(_selectedDate.year, 7, 14), // Fête nationale
-        DateTime(_selectedDate.year, 11, 01), // Toussaint
-        DateTime(_selectedDate.year, 4, 21), // Lundi de Pâques
-        DateTime(_selectedDate.year, 11, 11), // Armistice
-      ];
+      for (int annee = _selectedDate.year; annee <= _selectedEndDate.year; annee++) {
+        joursFeries.addAll([
+          DateTime(annee, 1, 1),   // Nouvel an
+          DateTime(annee, 4, 21),  // Lundi de Pâques
+          DateTime(annee, 5, 1),   // Fête du travail
+          DateTime(annee, 5, 29),  // Ascension
+          DateTime(annee, 6, 9),   // Lundi de Pentecôte
+          DateTime(annee, 7, 14),  // Fête nationale
+          DateTime(annee, 8, 15),  // Assomption
+          DateTime(annee, 11, 1),  // Toussaint
+          DateTime(annee, 12, 25), // Noël
+        ]);
+      }
+
 
 
       // permet de calculer les jours ouvrables
       List<DateTime> joursOuvrables = [];
 
       for (int i = 0; i <= _selectedEndDate.difference(_selectedDate).inDays; i++) {
-        DateTime jour = _selectedDate.add(Duration(days: i));
-        bool estWeekend = jour.weekday == DateTime.saturday || jour.weekday == DateTime.sunday;
-        bool estFerie = joursFeries.any((ferie) => ferie.year == jour.year && ferie.month == jour.month && ferie.day == jour.day);
+        final jour = _selectedDate.add(Duration(days: i));
 
-        if (!estWeekend && !estFerie) {
+        final bool estDuLundiAuVendredi = jour.weekday >= DateTime.monday && jour.weekday <= DateTime.friday;
+        final bool estFerie = joursFeries.any((ferie) =>
+        ferie.year == jour.year &&
+            ferie.month == jour.month &&
+            ferie.day == jour.day);
+
+        if (estDuLundiAuVendredi && !estFerie) {
           joursOuvrables.add(jour);
         }
       }
 
+
       int totalJoursCalcul = joursOuvrables.length;
       int absences = totalJoursCalcul - presence;
+      Logger().i("Jours ouvrables: ${joursOuvrables.length}");
+      Logger().i("Jours pointés (présence): $presenceCount");
 
 
       //  Appel au service pour calculer la pénalité

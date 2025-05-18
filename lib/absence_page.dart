@@ -53,13 +53,11 @@ class _AbsencePageState extends State<AbsencePage> {
         '01-01-2025', // Nouvel an
         '21-04-2025', // Lundi de Pâques
         '01-05-2025', // Fête du travail
-        '08-05-2025', // Victoire 1945
         '29-05-2025', // Ascension
         '09-06-2025', // Lundi de Pentecôte
         '14-07-2025', // Fête nationale
         '15-08-2025', // Assomption
         '01-11-2025', // Toussaint
-        '11-11-2025', // Armistice
         '25-12-2025', // Noël
       ];
 
