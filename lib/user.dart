@@ -356,7 +356,7 @@ Logger().d(response);
                   width: 80,
                   alignment: Alignment.centerRight,
                   child: Text(
-                    "${penaliteMontant.toStringAsFixed(0)} FR",
+                    "${penaliteMontant.toStringAsFixed(0)} FCFA",
                     style: TextStyle(color: Colors.purple, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
