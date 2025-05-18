@@ -156,8 +156,6 @@ class AccueilState extends State<Accueil> {
                 );
               },
             ),
-
-
           ],
         ),
         ),
@@ -181,6 +179,8 @@ class AccueilState extends State<Accueil> {
         );
         return;
       }
+      double entrepriseLat = 6.3872267 ;
+       double entrepriseLon =  2.3225513;
 
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
