@@ -24,7 +24,6 @@ class Accueil extends StatefulWidget {
   @override
   AccueilState createState() => AccueilState();
 }
-
 class AccueilState extends State<Accueil> {
   bool isLoading = false;
 
